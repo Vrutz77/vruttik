@@ -519,91 +519,88 @@
     <!-- star fill -->
     <style>
       .music-item {
-  position: relative;
-  padding-right: 48px; /* right side space for star */
-  list-style: none;
-}
-
-.fav-btn {
-  position: absolute;
-  right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  font-size: 20px;
-  cursor: pointer;
-  color: #6a0dad;
-  transition: color 0.2s ease-in-out;
-}
-
-.music-item.is-fav .fav-btn {
-  color: #6a0dad;
-}
-
-.column-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.refresh-btn {
-  margin-left: 10px;
-  padding: 4px 10px;
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  background: transparent;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 16px;
-  color: white; /* 👈 White color */
-  transition: all 0.2s ease-in-out;
-}
-
-.refresh-btn:hover {
-  background: rgba(255, 255, 255, 0.15);
-}
-
-    </style>
-   <script>
-document.addEventListener("DOMContentLoaded", () => {
-  let favs = JSON.parse(localStorage.getItem("favourites")) || {};
-
-  // Har ek music-item ke sath star button lagana
-  document.querySelectorAll(".music-item").forEach((li, index) => {
-    const btn = document.createElement("button");
-    btn.className = "fav-btn";
-    li.appendChild(btn);
-
-    const columnKey = li.closest(".column").id; // 👈 column identify
-    if (!favs[columnKey]) favs[columnKey] = [];
-
-    if (favs[columnKey].includes(index)) {
-      li.classList.add("is-fav");
-      btn.innerHTML = "★";
-    } else {
-      btn.innerHTML = "☆";
-    }
-
-    btn.addEventListener("click", () => {
-      li.classList.toggle("is-fav");
-
-      if (li.classList.contains("is-fav")) {
-        btn.innerHTML = "★";
-        favs[columnKey].push(index);
-      } else {
-        btn.innerHTML = "☆";
-        favs[columnKey] = favs[columnKey].filter((i) => i !== index);
+        position: relative;
+        padding-right: 48px; /* right side space for star */
+        list-style: none;
       }
 
-      localStorage.setItem("favourites", JSON.stringify(favs));
-    });
-  });
+      .fav-btn {
+        position: absolute;
+        right: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        font-size: 20px;
+        cursor: pointer;
+        color: #6a0dad;
+        transition: color 0.2s ease-in-out;
+      }
 
-  // Har column-header ke andar refresh button auto inject
+      .music-item.is-fav .fav-btn {
+        color: #6a0dad;
+      }
 
-});
-</script>
+      .column-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
 
+      .refresh-btn {
+        margin-left: 10px;
+        padding: 4px 10px;
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        background: transparent;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 16px;
+        color: white; /* 👈 White color */
+        transition: all 0.2s ease-in-out;
+      }
+
+      .refresh-btn:hover {
+        background: rgba(255, 255, 255, 0.15);
+      }
+    </style>
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        let favs = JSON.parse(localStorage.getItem("favourites")) || {};
+
+        // Har ek music-item ke sath star button lagana
+        document.querySelectorAll(".music-item").forEach((li, index) => {
+          const btn = document.createElement("button");
+          btn.className = "fav-btn";
+          li.appendChild(btn);
+
+          const columnKey = li.closest(".column").id; // 👈 column identify
+          if (!favs[columnKey]) favs[columnKey] = [];
+
+          if (favs[columnKey].includes(index)) {
+            li.classList.add("is-fav");
+            btn.innerHTML = "★";
+          } else {
+            btn.innerHTML = "☆";
+          }
+
+          btn.addEventListener("click", () => {
+            li.classList.toggle("is-fav");
+
+            if (li.classList.contains("is-fav")) {
+              btn.innerHTML = "★";
+              favs[columnKey].push(index);
+            } else {
+              btn.innerHTML = "☆";
+              favs[columnKey] = favs[columnKey].filter((i) => i !== index);
+            }
+
+            localStorage.setItem("favourites", JSON.stringify(favs));
+          });
+        });
+
+        // Har column-header ke andar refresh button auto inject
+      });
+    </script>
   </head>
 
   <body>
@@ -611,7 +608,7 @@ document.addEventListener("DOMContentLoaded", () => {
       <nav class="nav" aria-label="Primary">
         <div class="brand" aria-label="Brand">
           <span class="dot" aria-hidden="true"></span>
-            <span>Library</span>
+          <span>Library</span>
         </div>
         <button
           class="toggle"
@@ -788,18 +785,10 @@ document.addEventListener("DOMContentLoaded", () => {
             <h2>The 70S</h2>
           </div>
           <ul class="music-list">
-            <li class="music-item">
-              Acid Washed
-            </li>
-            <li class="music-item">
-              Anti-War
-            </li>
-            <li class="music-item">
-              At Your Leisure
-            </li>
-            <li class="music-item">
-              Ballad All-Star
-            </li>
+            <li class="music-item">Acid Washed</li>
+            <li class="music-item">Anti-War</li>
+            <li class="music-item">At Your Leisure</li>
+            <li class="music-item">Ballad All-Star</li>
             <li class="music-item">Bell Bottom Battery</li>
             <li class="music-item">Bell Bottom Glow</li>
             <li class="music-item">Black Sunday</li>
@@ -1492,7 +1481,7 @@ document.addEventListener("DOMContentLoaded", () => {
             alt="cover image"
           />
         </div>
-        <div class="column" id="bte">
+        <div class="column sbte" id="bte">
           <div class="column-header">
             <h2>BTE</h2>
           </div>
@@ -1647,7 +1636,7 @@ document.addEventListener("DOMContentLoaded", () => {
             <li class="music-item">Yellow Caps</li>
           </ul>
         </div>
-        <div class="column" id="chp">
+        <div class="column schp" id="chp">
           <div class="column-header">
             <h2>Chopped</h2>
           </div>
@@ -1825,8 +1814,12 @@ document.addEventListener("DOMContentLoaded", () => {
             <li class="music-item">Winter Keys</li>
             <li class="music-item">Your Majesty</li>
           </ul>
+           <img
+            src="https://vrutz77.github.io/mitul/chopped.png"
+            alt="cover image"
+          />
         </div>
-        <div class="column" id="crt">
+        <div class="column scrt" id="crt">
           <div class="column-header">
             <h2>CRT</h2>
           </div>
@@ -1913,7 +1906,7 @@ document.addEventListener("DOMContentLoaded", () => {
             <li class="music-item">Your Lips</li>
           </ul>
         </div>
-        <div class="column" id="dbk">
+        <div class="column sdbk" id="dbk">
           <div class="column-header">
             <h2>Drum Break</h2>
           </div>
@@ -1969,8 +1962,12 @@ document.addEventListener("DOMContentLoaded", () => {
             <li class="music-item">Turbo Groover</li>
             <li class="music-item">Uppercut</li>
           </ul>
+          <img
+            src="https://vrutz77.github.io/mitul/db.png"
+            alt="cover image"
+          />
         </div>
-        <div class="column" id="dmc">
+        <div class="column sdmc" id="dmc">
           <div class="column-header">
             <h2>Drum Machine</h2>
           </div>
@@ -2037,8 +2034,12 @@ document.addEventListener("DOMContentLoaded", () => {
             <li class="music-item">Wilderness</li>
             <li class="music-item">Word on the Street</li>
           </ul>
+          <img
+            src="https://vrutz77.github.io/mitul/dm.png"
+            alt="cover image"
+          />
         </div>
-        <div class="column" id="drp">
+        <div class="column sdrp" id="drp">
           <div class="column-header">
             <h2>DRIP</h2>
           </div>
@@ -2129,8 +2130,12 @@ document.addEventListener("DOMContentLoaded", () => {
             <li class="music-item">Trunk Rattler</li>
             <li class="music-item">Watch Your Step</li>
           </ul>
+          <img
+            src="https://vrutz77.github.io/mitul/drip.png"
+            alt="cover image"
+          />
         </div>
-        <div class="column" id="dsh">
+        <div class="column sdsh" id="dsh">
           <div class="column-header">
             <h2>Drum Sash</h2>
           </div>
@@ -2274,8 +2279,12 @@ document.addEventListener("DOMContentLoaded", () => {
             <li class="music-item">Vintage Rock Grooves</li>
             <li class="music-item">Vintage Throwback</li>
           </ul>
+          <img
+            src="https://vrutz77.github.io/mitul/ds.png"
+            alt="cover image"
+          />
         </div>
-        <div class="column" id="dtv">
+        <div class="column sdtv" id="dtv">
           <div class="column-header">
             <h2>Distant Voice</h2>
           </div>
@@ -2336,8 +2345,12 @@ document.addEventListener("DOMContentLoaded", () => {
             <li class="music-item">Winter Sun</li>
             <li class="music-item">Zenith Falls</li>
           </ul>
+           <img
+            src="https://vrutz77.github.io/mitul/dv.png"
+            alt="cover image"
+          />
         </div>
-        <div class="column" id="exp">
+        <div class="column sexp" id="exp">
           <div class="column-header">
             <h2>Extra Pors</h2>
           </div>
@@ -2402,8 +2415,12 @@ document.addEventListener("DOMContentLoaded", () => {
             <li class="music-item">Workshop Perc</li>
             <li class="music-item">World Auxiliary</li>
           </ul>
+           <img
+            src="https://vrutz77.github.io/mitul/ep.png"
+            alt="cover image"
+          />
         </div>
-        <div class="column" id="fbk">
+        <div class="column sfbk" id="fbk">
           <div class="column-header">
             <h2>FBK</h2>
           </div>
@@ -2487,7 +2504,7 @@ document.addEventListener("DOMContentLoaded", () => {
             <li class="music-item">Wonderland</li>
           </ul>
         </div>
-        <div class="column" id="fos">
+        <div class="column sfos" id="fos">
           <div class="column-header">
             <h2>Field of Sound</h2>
           </div>
@@ -2572,8 +2589,12 @@ document.addEventListener("DOMContentLoaded", () => {
             <li class="music-item">World of Whirls</li>
             <li class="music-item">Wormwood</li>
           </ul>
+           <img
+            src="https://vrutz77.github.io/mitul/fos.png"
+            alt="cover image"
+          />
         </div>
-        <div class="column" id="hny">
+        <div class="column shny" id="hny">
           <div class="column-header">
             <h2>Honey</h2>
           </div>
@@ -2632,7 +2653,7 @@ document.addEventListener("DOMContentLoaded", () => {
             <li class="music-item">Your Smile</li>
           </ul>
         </div>
-        <div class="column" id="hkd">
+        <div class="column shkd" id="hkd">
           <div class="column-header">
             <h2>Hooked</h2>
           </div>
@@ -2901,8 +2922,12 @@ document.addEventListener("DOMContentLoaded", () => {
             <li class="music-item">Woo!</li>
             <li class="music-item">You and I</li>
           </ul>
+           <img
+            src="https://vrutz77.github.io/mitul/hooked.png"
+            alt="cover image"
+          />
         </div>
-        <div class="column" id="igr">
+        <div class="column sigr" id="igr">
           <div class="column-header">
             <h2>Ingredients</h2>
           </div>
@@ -3062,8 +3087,9 @@ document.addEventListener("DOMContentLoaded", () => {
             <li class="music-item">Warm Banjo</li>
             <li class="music-item">Western Skies</li>
           </ul>
+          
         </div>
-        <div class="column" id="ihh">
+        <div class="column sihh" id="ihh">
           <div class="column-header">
             <h2>Instead of Hi Hats</h2>
           </div>
@@ -3124,8 +3150,12 @@ document.addEventListener("DOMContentLoaded", () => {
             <li class="music-item">Woodworkers Collective</li>
             <li class="music-item">Wooky Synth</li>
           </ul>
+           <img
+            src="https://vrutz77.github.io/mitul/hihats.png"
+            alt="cover image"
+          />
         </div>
-        <div class="column" id="iwd">
+        <div class="column siwd" id="iwd">
           <div class="column-header">
             <h2>In a World</h2>
           </div>
@@ -3205,8 +3235,9 @@ document.addEventListener("DOMContentLoaded", () => {
             <li class="music-item">Visitor</li>
             <li class="music-item">Warning</li>
           </ul>
+          
         </div>
-        <div class="column" id="led">
+        <div class="column sled" id="led">
           <div class="column-header">
             <h2>LED</h2>
           </div>
@@ -3293,7 +3324,7 @@ document.addEventListener("DOMContentLoaded", () => {
             <li class="music-item">Zen Timewarp</li>
           </ul>
         </div>
-        <div class="column" id="mdc">
+        <div class="column smdc" id="mdc">
           <div class="column-header">
             <h2>Modular Circuitry</h2>
           </div>
@@ -3413,8 +3444,12 @@ document.addEventListener("DOMContentLoaded", () => {
             <li class="music-item">VIbey Analog</li>
             <li class="music-item">Warp Room</li>
           </ul>
+           <img
+            src="https://vrutz77.github.io/mitul/mc.png"
+            alt="cover image"
+          />
         </div>
-        <div class="column" id="mmt">
+        <div class="column smmt" id="mmt">
           <div class="column-header">
             <h2>Memento</h2>
           </div>
@@ -3480,8 +3515,12 @@ document.addEventListener("DOMContentLoaded", () => {
             <li class="music-item">With Regrets</li>
             <li class="music-item">Zoning Out</li>
           </ul>
+           <img
+            src="https://vrutz77.github.io/mitul/memento.png"
+            alt="cover image"
+          />
         </div>
-        <div class="column" id="nsh">
+        <div class="column snsh" id="nsh">
           <div class="column-header">
             <h2>Nashville</h2>
           </div>
@@ -3567,8 +3606,12 @@ document.addEventListener("DOMContentLoaded", () => {
             <li class="music-item">Twango</li>
             <li class="music-item">Warm 12-String</li>
           </ul>
+           <img
+            src="https://vrutz77.github.io/mitul/nashville.png"
+            alt="cover image"
+          />
         </div>
-        <div class="column" id="ntm">
+        <div class="column sntm" id="ntm">
           <div class="column-header">
             <h2>Night mane</h2>
           </div>
@@ -3703,7 +3746,7 @@ document.addEventListener("DOMContentLoaded", () => {
             <li class="music-item">Zombie Warfare</li>
           </ul>
         </div>
-        <div class="column" id="obs">
+        <div class="column sobs" id="obs">
           <div class="column-header">
             <h2>OBS</h2>
           </div>
@@ -3832,7 +3875,7 @@ document.addEventListener("DOMContentLoaded", () => {
             <li class="music-item">Visible Future</li>
           </ul>
         </div>
-        <div class="column" id="ovt">
+        <div class="column sovt" id="ovt">
           <div class="column-header">
             <h2>Over Tune</h2>
           </div>
@@ -3896,7 +3939,7 @@ document.addEventListener("DOMContentLoaded", () => {
             <li class="music-item">Zero-Sum</li>
           </ul>
         </div>
-        <div class="column" id="pkb">
+        <div class="column spkb" id="pkb">
           <div class="column-header">
             <h2>Pocket Band</h2>
           </div>
@@ -5840,5 +5883,3 @@ document.addEventListener("DOMContentLoaded", () => {
     </div>
   </body>
 </html>
-
-
