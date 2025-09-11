@@ -213,9 +213,9 @@
     <!-- Contact Information -->
     <div class="section section1">
       <h2>Contact Information</h2>
-      <p><b>Vruttik Tailor:</b> +91 63535 50722</p>
-      <p><b>Father:</b> +91 94275 75145</p>
-      <p><b>Mother:</b> +91 96242 21074</p>
+      <p><a href="tel:+916353550722"><b>Vruttik Tailor:</b> +91 63535 50722</a></p>
+      <p><a href="tel:+916353550722"><b>Father:</b> +91 94275 75145</a></p>
+      <p><a href="tel:+916353550722"><b>Mother:</b> +91 96242 21074</a></p>
     </div>
 
     <!-- Job Details -->
@@ -224,7 +224,38 @@
       <p>Web Developer at Enlightened Digital Marketing, Chala, Vapi.</p>
     </div>
   </div>
+  <style>
+    /* Contact Links Styling */
+.section1 a {
+  color: #2c3e50;
+  text-decoration: none;
+  font-weight: 500;
+  position: relative;
+  display: inline-block;
+  transition: color 0.3s ease;
+}
+
+.section1 a::after {
+  content: "";
+  position: absolute;
+  width: 0;
+  height: 2px;
+  left: 0;
+  bottom: -3px;
+  background: linear-gradient(90deg, #36d1dc, #5b86e5);
+  transition: width 0.3s ease;
+  border-radius: 2px;
+}
+
+.section1 a:hover {
+  color: #5b86e5; /* Hover text color */
+}
+
+.section1 a:hover::after {
+  width: 100%; /* Underline expands */
+}
+
+  </style>
 </body>
 </html>
-
 
