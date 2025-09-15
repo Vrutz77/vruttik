@@ -25,6 +25,7 @@
         font-family: "Poppins", sans-serif;
         background: linear-gradient(135deg, #f4f7fa, #e9f0ff);
         color: var(--text);
+        position: relative;
       }
       .container {
         max-width: 950px;
@@ -224,16 +225,7 @@
         }
       }
 
-      /* Responsive */
-      @media (max-width: 768px) {
-        .container {
-          padding: 1.5rem 1rem;
-          margin: 1rem;
-        }
-        header h1 {
-          font-size: 2rem;
-        }
-      }
+      /* Education Cards */
       .education-list {
         display: flex;
         flex-direction: column;
@@ -292,6 +284,116 @@
       .edu-marks span {
         font-weight: 600;
         color: #00c6ff;
+      }
+      
+      /* Back to Top Button */
+      .back-to-top {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        box-shadow: 0 4px 20px rgba(99, 91, 255, 0.3);
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(20px);
+        transition: all 0.4s ease;
+        z-index: 1000;
+        cursor: pointer;
+      }
+      
+      .back-to-top.show {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+      }
+      
+      .back-to-top:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 6px 25px rgba(99, 91, 255, 0.5);
+      }
+      
+      .back-to-top i {
+        font-size: 1.5rem;
+        font-weight: bold;
+      }
+
+      /* Responsive */
+      @media (max-width: 768px) {
+        .container {
+          padding: 1.5rem 1rem;
+          margin: 1rem;
+        }
+
+        header h1 {
+          font-size: 1.8rem;
+        }
+
+        .role {
+          font-size: 0.9rem;
+          padding: 0.3rem 0.8rem;
+        }
+
+        h2 {
+          font-size: 1rem;
+        }
+
+        .card {
+          padding: 1rem 1.2rem;
+        }
+
+        .job-title,
+        .company {
+          font-size: 0.9rem;
+        }
+
+        .duration {
+          font-size: 0.8rem;
+        }
+
+        ul li {
+          font-size: 0.9rem;
+        }
+
+        .project-title {
+          font-size: 1rem;
+        }
+
+        .edu-header h3 {
+          font-size: 1rem;
+        }
+
+        .edu-year {
+          font-size: 0.75rem;
+          padding: 0.15rem 0.6rem;
+        }
+
+        .edu-institute {
+          font-size: 0.9rem;
+        }
+
+        .edu-marks {
+          font-size: 0.85rem;
+        }
+
+        .contact-links a {
+          font-size: 0.85rem;
+          padding: 0.4rem 1rem;
+        }
+        
+        .back-to-top {
+          bottom: 20px;
+          right: 20px;
+          width: 45px;
+          height: 45px;
+        }
       }
     </style>
   </head>
@@ -448,7 +550,7 @@
           >
           <ul>
             <li>
-              <b>Objective:</b> Analyzed India’s global trade scenario,
+              <b>Objective:</b> Analyzed India's global trade scenario,
               identified top & bottom trading partners, forecasted trends for
               SDG 17 goals
             </li>
@@ -501,5 +603,26 @@
         </div>
       </section>
     </div>
+    
+    <!-- Back to Top Button -->
+    <a href="#" class="back-to-top" id="backToTop">↑</a>
+
+    <script>
+      // Back to Top Button
+      const backToTopButton = document.getElementById("backToTop");
+      
+      window.addEventListener("scroll", () => {
+        if (window.pageYOffset > 300) {
+          backToTopButton.classList.add("show");
+        } else {
+          backToTopButton.classList.remove("show");
+        }
+      });
+      
+      backToTopButton.addEventListener("click", (e) => {
+        e.preventDefault();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+    </script>
   </body>
 </html>
