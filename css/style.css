@@ -987,6 +987,7 @@ a:focus {
     position: relative;
     padding: 60px 30px 30px 30px;
     background: #ffffff;
+    border-bottom: 30px solid #F6D155;
 }
 
 .contact .contact-info {
