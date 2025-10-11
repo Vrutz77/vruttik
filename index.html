@@ -43,6 +43,14 @@
         background: #000;
         color: #fff;
       }
+      @media (max-width: 768px) {
+        .portfolio-row {
+          flex-direction: column;
+        }
+        .portfolio-item {
+          width: 100% !important;
+        }
+      }
     </style>
   </head>
 
@@ -358,9 +366,15 @@
               <b>problem-solving skills</b> helped deliver <b>high-quality</b>,
               <b>responsive websites</b> tailored to client needs.
             </p>
-            <div style="display: flex; gap: 20px; justify-content: center">
+            <div
+              class="portfolio-row"
+              style="display: flex; gap: 20px; justify-content: center"
+            >
               <!-- First Image Block -->
-              <div style="width: 50%; text-align: center">
+              <div
+                class="portfolio-item"
+                style="width: 50%; text-align: center"
+              >
                 <div
                   style="
                     height: 200px;
@@ -384,7 +398,10 @@
               </div>
 
               <!-- Second Image Block -->
-              <div style="width: 50%; text-align: center">
+              <div
+                class="portfolio-item"
+                style="width: 50%; text-align: center"
+              >
                 <div
                   style="
                     height: 200px;
