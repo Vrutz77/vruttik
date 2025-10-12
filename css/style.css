@@ -358,7 +358,7 @@ a:focus {
 
 .large-btn .btn {
     position: relative;
-    width: 50%;
+    width: 100%;
     padding: 15px 0;
     color: #ffffff;
     font-size: 20px;
@@ -1109,4 +1109,10 @@ a:focus {
 
 .v1{
     padding-left: 18px;
+}
+/* Mobile view - black background */
+@media (max-width: 768px) {
+    .navbar {
+        background: #000000 !important;
+    }
 }
