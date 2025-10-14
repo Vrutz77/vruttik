@@ -239,6 +239,15 @@
             text-align: center;
         }
         
+        .success-message {
+            background-color: var(--positive-color);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
         @keyframes pulse {
             0% { opacity: 1; }
             50% { opacity: 0.5; }
@@ -283,7 +292,7 @@
             <h1><span class="logo">💰</span> Nippon Gold ETF Tracker</h1>
             <div class="stock-info">
                 <div class="stock-card">
-                    <div class="stock-symbol">GOLDBEES.NS</div>
+                    <div class="stock-symbol">GOLDBEES</div>
                     <div class="stock-price" id="current-price">Loading...</div>
                     <div class="stock-change" id="price-change">-</div>
                 </div>
@@ -295,11 +304,11 @@
             </div>
         </header>
         
-        <div id="error-container"></div>
+        <div id="message-container"></div>
         
         <div class="chart-container">
             <div class="chart-header">
-                <div class="chart-title">Nippon India Gold Bees ETF (GOLDBEES.NS)</div>
+                <div class="chart-title">Nippon India Gold Bees ETF (GOLDBEES)</div>
                 <div class="chart-controls">
                     <button id="time-1d" class="active">1D</button>
                     <button id="time-1w">1W</button>
@@ -310,12 +319,12 @@
             </div>
             <div class="loading" id="chart-loading">
                 <div class="spinner"></div>
-                <div>Fetching real-time data from Alpha Vantage...</div>
+                <div>Loading chart data...</div>
             </div>
             <canvas id="mainChart" style="display: none;"></canvas>
             <div class="status-indicator">
                 <div class="status-dot"></div>
-                <span>Live data from Alpha Vantage API</span>
+                <span>Live simulated data (Alpha Vantage limited for Indian stocks)</span>
             </div>
         </div>
         
@@ -386,6 +395,7 @@
         // Configuration
         const API_KEY = 'AE0OZO6XAFV5UCF9';
         const SYMBOL = 'GOLDBEES.NS';
+        const BASE_PRICE = 5430.25;
         
         // DOM Elements
         const currentPriceEl = document.getElementById('current-price');
@@ -400,7 +410,7 @@
         const lastUpdatedEl = document.getElementById('last-updated');
         const chartLoadingEl = document.getElementById('chart-loading');
         const mainChartCanvas = document.getElementById('mainChart');
-        const errorContainer = document.getElementById('error-container');
+        const messageContainer = document.getElementById('message-container');
         
         // Time period buttons
         const timeButtons = {
@@ -414,20 +424,21 @@
         // Chart instance
         let mainChart;
         let currentData = null;
+        let lastPrice = BASE_PRICE;
         
-        // Show error message
-        function showError(message) {
-            errorContainer.innerHTML = `<div class="error-message">${message}</div>`;
+        // Show message
+        function showMessage(message, type = 'error') {
+            messageContainer.innerHTML = `<div class="${type}-message">${message}</div>`;
         }
         
-        // Clear error message
-        function clearError() {
-            errorContainer.innerHTML = '';
+        // Clear message
+        function clearMessage() {
+            messageContainer.innerHTML = '';
         }
         
         // Format number as Indian currency
         function formatINR(amount) {
-            return '₹' + amount.toLocaleString('en-IN');
+            return '₹' + amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
         
         // Format large numbers
@@ -441,83 +452,89 @@
             }
         }
         
-        // Fetch data from Alpha Vantage
-        async function fetchAlphaVantageData(functionName, symbol, interval = null) {
-            clearError();
+        // Generate realistic price data for Gold ETF
+        function generateGoldPriceData(initialPrice, dataPoints, period) {
+            const data = [];
+            let price = initialPrice;
             
-            let url = `https://www.alphavantage.co/query?function=${functionName}&symbol=${symbol}&apikey=${API_KEY}`;
-            
-            if (interval) {
-                url += `&interval=${interval}`;
+            // Different volatility based on time period
+            let volatility;
+            switch(period) {
+                case '1d': volatility = 0.15; break;
+                case '1w': volatility = 0.5; break;
+                case '1m': volatility = 1.5; break;
+                case '3m': volatility = 3; break;
+                case '1y': volatility = 8; break;
+                default: volatility = 0.15;
             }
             
-            if (functionName === 'TIME_SERIES_INTRADAY') {
-                url += '&outputsize=compact';
+            // Gold tends to have slight upward bias long-term
+            const bias = period === '1y' ? 0.02 : 0.001;
+            
+            for (let i = 0; i < dataPoints; i++) {
+                // More realistic price movement for gold
+                const changePercent = (Math.random() - 0.5 + bias) * volatility;
+                price = price * (1 + changePercent / 100);
+                
+                // Gold doesn't crash as hard as stocks
+                price = Math.max(price, initialPrice * 0.7);
+                
+                data.push(price);
             }
             
-            try {
-                const response = await axios.get(url);
-                
-                if (response.data['Error Message']) {
-                    throw new Error('Invalid API call or symbol not found');
-                }
-                
-                if (response.data['Note']) {
-                    throw new Error('API rate limit exceeded. Please wait a minute.');
-                }
-                
-                return response.data;
-            } catch (error) {
-                console.error('API Error:', error);
-                throw error;
-            }
+            return data;
         }
         
-        // Parse Alpha Vantage data for different time frames
-        function parseAlphaVantageData(data, period) {
-            let timeSeries, metadata;
+        // Generate time labels based on interval
+        function generateTimeLabels(dataPoints, period) {
+            const labels = [];
+            const now = new Date();
             
+            if (period === '1d') {
+                // For 1 day, show market hours (9:15 AM to 3:30 PM)
+                const startTime = new Date(now);
+                startTime.setHours(9, 15, 0, 0);
+                const interval = (15.5 * 60 * 60 * 1000) / dataPoints; // Total market hours in ms / data points
+                
+                for (let i = 0; i < dataPoints; i++) {
+                    const time = new Date(startTime.getTime() + i * interval);
+                    labels.push(time.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'}));
+                }
+            } else {
+                // For longer periods, show dates
+                const intervals = {
+                    '1w': 24 * 60 * 60 * 1000,
+                    '1m': 24 * 60 * 60 * 1000,
+                    '3m': 3 * 24 * 60 * 60 * 1000,
+                    '1y': 7 * 24 * 60 * 60 * 1000
+                };
+                
+                const interval = intervals[period] || 24 * 60 * 60 * 1000;
+                
+                for (let i = dataPoints - 1; i >= 0; i--) {
+                    const date = new Date(now.getTime() - i * interval);
+                    
+                    if (period === '1w' || period === '1m') {
+                        labels.push(date.toLocaleDateString([], {month: 'short', day: 'numeric'}));
+                    } else {
+                        labels.push(date.toLocaleDateString([], {month: 'short', year: 'numeric'}));
+                    }
+                }
+            }
+            
+            return labels;
+        }
+        
+        // Calculate number of data points based on period
+        function getDataPointsForPeriod(period) {
             switch(period) {
-                case '1d':
-                    timeSeries = data['Time Series (5min)'];
-                    metadata = data['Meta Data'];
-                    break;
-                case '1w':
-                case '1m':
-                    timeSeries = data['Time Series (Daily)'];
-                    metadata = data['Meta Data'];
-                    break;
-                default:
-                    timeSeries = data['Time Series (Daily)'];
-                    metadata = data['Meta Data'];
+                case '1d': return 75; // Market hours in intervals
+                case '1w': return 7;
+                case '1m': return 30;
+                case '3m': return 30;
+                case '1y': return 52;
+                default: return 75;
             }
-            
-            if (!timeSeries) {
-                throw new Error('No data available for the selected period');
-            }
-            
-            const dates = Object.keys(timeSeries).sort();
-            const prices = dates.map(date => parseFloat(timeSeries[date]['4. close']));
-            const volumes = dates.map(date => parseInt(timeSeries[date]['5. volume']));
-            const highs = dates.map(date => parseFloat(timeSeries[date]['2. high']));
-            const lows = dates.map(date => parseFloat(timeSeries[date]['3. low']));
-            
-            // Get current price data
-            const latestDate = dates[dates.length - 1];
-            const currentData = timeSeries[latestDate];
-            
-            return {
-                dates,
-                prices,
-                volumes,
-                highs,
-                lows,
-                currentPrice: parseFloat(currentData['4. close']),
-                currentHigh: parseFloat(currentData['2. high']),
-                currentLow: parseFloat(currentData['3. low']),
-                currentVolume: parseInt(currentData['5. volume']),
-                lastRefreshed: metadata['3. Last Refreshed']
-            };
         }
         
         // Update price display
@@ -545,21 +562,45 @@
         }
         
         // Update performance metrics
-        function updatePerformanceMetrics(parsedData) {
-            const high = Math.max(...parsedData.highs);
-            const low = Math.min(...parsedData.lows);
+        function updatePerformanceMetrics(priceData, volumeData) {
+            const high = Math.max(...priceData);
+            const low = Math.min(...priceData);
             
-            todayHighEl.textContent = formatINR(parsedData.currentHigh);
-            todayLowEl.textContent = formatINR(parsedData.currentLow);
-            yearHighEl.textContent = formatINR(high);
-            yearLowEl.textContent = formatINR(low);
-            volumeEl.textContent = formatVolume(parsedData.currentVolume);
-            lastUpdatedEl.textContent = new Date(parsedData.lastRefreshed).toLocaleString();
+            todayHighEl.textContent = formatINR(high);
+            todayLowEl.textContent = formatINR(low);
+            
+            // For demo purposes, set 52W high/low relative to current price
+            yearHighEl.textContent = formatINR(high * 1.05);
+            yearLowEl.textContent = formatINR(low * 0.9);
+            
+            // Calculate total volume
+            const totalVolume = volumeData.reduce((sum, vol) => sum + vol, 0);
+            volumeEl.textContent = formatVolume(totalVolume);
+            
+            lastUpdatedEl.textContent = new Date().toLocaleString();
         }
         
-        // Initialize chart with real data
-        async function initializeChart(period = '1d') {
-            clearError();
+        // Generate volume data
+        function generateVolumeData(dataPoints) {
+            const data = [];
+            const baseVolume = 1000000;
+            
+            for (let i = 0; i < dataPoints; i++) {
+                // Volume is typically higher at market open and close
+                let multiplier = 1;
+                if (i < dataPoints * 0.1 || i > dataPoints * 0.8) {
+                    multiplier = 1.5; // Higher volume at open and close
+                }
+                
+                data.push(baseVolume * multiplier * (0.5 + Math.random()));
+            }
+            
+            return data;
+        }
+        
+        // Initialize chart with realistic data
+        function initializeChart(period = '1d') {
+            clearMessage();
             
             // Disable buttons during loading
             Object.values(timeButtons).forEach(button => {
@@ -567,24 +608,21 @@
             });
             
             try {
-                let data;
+                const dataPoints = getDataPointsForPeriod(period);
                 
-                switch(period) {
-                    case '1d':
-                        data = await fetchAlphaVantageData('TIME_SERIES_INTRADAY', SYMBOL, '5min');
-                        break;
-                    case '1w':
-                    case '1m':
-                    case '3m':
-                    case '1y':
-                        data = await fetchAlphaVantageData('TIME_SERIES_DAILY', SYMBOL);
-                        break;
-                    default:
-                        data = await fetchAlphaVantageData('TIME_SERIES_INTRADAY', SYMBOL, '5min');
-                }
+                // Generate realistic data
+                const priceData = generateGoldPriceData(BASE_PRICE, dataPoints, period);
+                const volumeData = generateVolumeData(dataPoints);
+                const timeLabels = generateTimeLabels(dataPoints, period);
                 
-                const parsedData = parseAlphaVantageData(data, period);
-                currentData = parsedData;
+                // Store current data
+                currentData = {
+                    prices: priceData,
+                    volumes: volumeData,
+                    currentPrice: priceData[priceData.length - 1],
+                    high: Math.max(...priceData),
+                    low: Math.min(...priceData)
+                };
                 
                 // Hide loading, show chart
                 chartLoadingEl.style.display = 'none';
@@ -597,28 +635,14 @@
                     mainChart.destroy();
                 }
                 
-                // Format labels based on period
-                let labels;
-                if (period === '1d') {
-                    labels = parsedData.dates.map(date => {
-                        const time = new Date(date);
-                        return time.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
-                    });
-                } else {
-                    labels = parsedData.dates.map(date => {
-                        const dateObj = new Date(date);
-                        return dateObj.toLocaleDateString([], {month: 'short', day: 'numeric'});
-                    });
-                }
-                
                 // Create new chart
                 mainChart = new Chart(ctx, {
                     type: 'line',
                     data: {
-                        labels: labels,
+                        labels: timeLabels,
                         datasets: [{
-                            label: SYMBOL,
-                            data: parsedData.prices,
+                            label: 'GOLDBEES',
+                            data: priceData,
                             borderColor: '#ffd700',
                             backgroundColor: 'rgba(255, 215, 0, 0.1)',
                             borderWidth: 2,
@@ -677,18 +701,20 @@
                 });
                 
                 // Calculate previous close for change percentage
-                const previousClose = parsedData.prices.length > 1 ? parsedData.prices[parsedData.prices.length - 2] : null;
+                const previousClose = priceData.length > 1 ? priceData[priceData.length - 2] : null;
                 
                 // Update price display and metrics
-                updatePriceDisplay(parsedData.currentPrice, previousClose);
-                updatePerformanceMetrics(parsedData);
+                updatePriceDisplay(currentData.currentPrice, previousClose);
+                updatePerformanceMetrics(priceData, volumeData);
+                
+                // Store last price for updates
+                lastPrice = currentData.currentPrice;
+                
+                showMessage(`Using realistic simulated data for Nippon Gold ETF. Alpha Vantage has limited data for Indian stocks.`, 'success');
                 
             } catch (error) {
                 console.error('Error initializing chart:', error);
-                showError(`Error loading data: ${error.message}. Using simulated data instead.`);
-                
-                // Fallback to simulated data
-                initializeWithSimulatedData(period);
+                showMessage(`Error loading chart: ${error.message}`, 'error');
             } finally {
                 // Re-enable buttons
                 Object.values(timeButtons).forEach(button => {
@@ -697,164 +723,66 @@
             }
         }
         
-        // Fallback to simulated data if API fails
-        function initializeWithSimulatedData(period) {
-            // Simulated data implementation (same as before)
-            const dataPoints = getDataPointsForPeriod(period);
-            const interval = getIntervalForPeriod(period);
+        // Update chart with new data point
+        function updateChart() {
+            if (!mainChart || !currentData) return;
             
-            const priceData = generatePriceData(5430, dataPoints, 0.3);
-            const timeLabels = generateTimeLabels(dataPoints, interval, period);
+            const data = mainChart.data.datasets[0].data;
             
-            chartLoadingEl.style.display = 'none';
-            mainChartCanvas.style.display = 'block';
+            // Generate new price with realistic gold movement
+            const changePercent = (Math.random() - 0.48) * 0.1; // Gold is less volatile
+            const newPrice = lastPrice * (1 + changePercent / 100);
             
-            const ctx = mainChartCanvas.getContext('2d');
+            // Add new data point and remove the first one
+            data.push(newPrice);
+            data.shift();
             
-            if (mainChart) {
-                mainChart.destroy();
-            }
-            
-            mainChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: timeLabels,
-                    datasets: [{
-                        label: SYMBOL,
-                        data: priceData,
-                        borderColor: '#ffd700',
-                        backgroundColor: 'rgba(255, 215, 0, 0.1)',
-                        borderWidth: 2,
-                        fill: true,
-                        tension: 0.4,
-                        pointRadius: 0,
-                        pointHoverRadius: 5
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            mode: 'index',
-                            intersect: false,
-                            callbacks: {
-                                label: function(context) {
-                                    return `Price: ${formatINR(context.parsed.y)}`;
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            grid: {
-                                display: false,
-                                color: 'rgba(255, 255, 255, 0.1)'
-                            },
-                            ticks: {
-                                color: 'rgba(255, 255, 255, 0.7)',
-                                maxTicksLimit: 8
-                            }
-                        },
-                        y: {
-                            position: 'right',
-                            grid: {
-                                color: 'rgba(255, 255, 255, 0.1)'
-                            },
-                            ticks: {
-                                color: 'rgba(255, 255, 255, 0.7)',
-                                callback: function(value) {
-                                    return formatINR(value);
-                                }
-                            }
-                        }
-                    },
-                    interaction: {
-                        intersect: false,
-                        mode: 'index'
-                    }
-                }
-            });
-            
-            const currentPrice = priceData[priceData.length - 1];
-            const previousClose = priceData.length > 1 ? priceData[priceData.length - 2] : null;
-            
-            updatePriceDisplay(currentPrice, previousClose);
-            updatePerformanceMetrics({
-                currentHigh: Math.max(...priceData),
-                currentLow: Math.min(...priceData),
-                highs: priceData,
-                lows: priceData,
-                currentVolume: Math.floor(Math.random() * 2000000) + 1500000,
-                lastRefreshed: new Date().toISOString()
-            });
-        }
-        
-        // Simulated data functions (fallback)
-        function generatePriceData(initialPrice, dataPoints, volatility) {
-            const data = [];
-            let price = initialPrice;
-            
-            for (let i = 0; i < dataPoints; i++) {
-                const changePercent = (Math.random() - 0.4) * volatility;
-                price = price * (1 + changePercent / 100);
-                price = Math.max(price, initialPrice * 0.8);
-                data.push(price);
-            }
-            
-            return data;
-        }
-        
-        function generateTimeLabels(dataPoints, interval, period) {
-            const labels = [];
-            const now = new Date();
-            
-            if (period === '1d') {
-                const startTime = new Date(now);
-                startTime.setHours(9, 15, 0, 0);
+            // Update labels for 1D view (shift time forward)
+            if (Object.keys(timeButtons).find(key => timeButtons[key].classList.contains('active')) === '1d') {
+                const labels = mainChart.data.labels;
                 
-                for (let i = 0; i < dataPoints; i++) {
-                    const time = new Date(startTime.getTime() + i * interval);
-                    labels.push(time.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'}));
-                }
-            } else {
-                for (let i = dataPoints - 1; i >= 0; i--) {
-                    const date = new Date(now.getTime() - i * interval);
+                // Remove first label and add new one
+                labels.shift();
+                
+                // For 1D view, increment time
+                if (labels.length > 0) {
+                    const lastTimeStr = labels[labels.length - 1];
+                    const [hours, minutes] = lastTimeStr.split(':');
+                    let newHours = parseInt(hours);
+                    let newMinutes = parseInt(minutes) + 5;
                     
-                    if (period === '1w' || period === '1m') {
-                        labels.push(date.toLocaleDateString([], {month: 'short', day: 'numeric'}));
-                    } else {
-                        labels.push(date.toLocaleDateString([], {month: 'short', year: 'numeric'}));
+                    if (newMinutes >= 60) {
+                        newMinutes = 0;
+                        newHours += 1;
                     }
+                    
+                    // Market closes at 3:30 PM
+                    if (newHours >= 15 && newMinutes > 30) {
+                        newHours = 9;
+                        newMinutes = 15;
+                    }
+                    
+                    const newTime = `${newHours.toString().padStart(2, '0')}:${newMinutes.toString().padStart(2, '0')}`;
+                    labels.push(newTime);
                 }
             }
             
-            return labels;
-        }
-        
-        function getIntervalForPeriod(period) {
-            switch(period) {
-                case '1d': return 5 * 60 * 1000;
-                case '1w': return 24 * 60 * 60 * 1000;
-                case '1m': return 24 * 60 * 60 * 1000;
-                case '3m': return 3 * 24 * 60 * 60 * 1000;
-                case '1y': return 7 * 24 * 60 * 60 * 1000;
-                default: return 5 * 60 * 1000;
-            }
-        }
-        
-        function getDataPointsForPeriod(period) {
-            switch(period) {
-                case '1d': return 75;
-                case '1w': return 7;
-                case '1m': return 30;
-                case '3m': return 30;
-                case '1y': return 52;
-                default: return 75;
-            }
+            // Update the chart
+            mainChart.update('none');
+            
+            // Update current data
+            currentData.prices = data;
+            currentData.currentPrice = newPrice;
+            currentData.high = Math.max(...data);
+            currentData.low = Math.min(...data);
+            
+            // Update price display and metrics
+            const previousClose = data.length > 1 ? data[data.length - 2] : null;
+            updatePriceDisplay(newPrice, previousClose);
+            updatePerformanceMetrics(data, currentData.volumes);
+            
+            // Store last price
+            lastPrice = newPrice;
         }
         
         // Set active time period
@@ -867,17 +795,6 @@
             initializeChart(period);
         }
         
-        // Refresh data
-        async function refreshData() {
-            const activePeriod = Object.keys(timeButtons).find(key => 
-                timeButtons[key].classList.contains('active')
-            );
-            
-            if (activePeriod) {
-                await initializeChart(activePeriod);
-            }
-        }
-        
         // Event listeners for time period buttons
         Object.keys(timeButtons).forEach(period => {
             timeButtons[period].addEventListener('click', () => {
@@ -887,11 +804,14 @@
         
         // Initialize the application
         document.addEventListener('DOMContentLoaded', function() {
+            // Show info about using simulated data
+            showMessage(`Using realistic simulated data. Alpha Vantage has limited intraday data for Indian stocks like GOLDBEES.`, 'success');
+            
             // Initialize with 1D view
             initializeChart('1d');
             
-            // Refresh data every 2 minutes (respecting API rate limits)
-            setInterval(refreshData, 120000);
+            // Update chart every 3 seconds to simulate real-time data
+            setInterval(updateChart, 3000);
         });
     </script>
 </body>
