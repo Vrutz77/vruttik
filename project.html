@@ -1,1 +1,500 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-time Stock Market Charts</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary-color: #2962ff;
+            --secondary-color: #0d47a1;
+            --background-color: #f5f7fa;
+            --card-color: #ffffff;
+            --text-color: #333333;
+            --positive-color: #00c853;
+            --negative-color: #ff1744;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: var(--background-color);
+            color: var(--text-color);
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        h1 {
+            color: var(--primary-color);
+            font-size: 28px;
+        }
+        
+        .stock-info {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .stock-card {
+            background-color: var(--card-color);
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            min-width: 150px;
+            text-align: center;
+        }
+        
+        .stock-symbol {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .stock-price {
+            font-size: 22px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .stock-change {
+            font-size: 14px;
+        }
+        
+        .positive {
+            color: var(--positive-color);
+        }
+        
+        .negative {
+            color: var(--negative-color);
+        }
+        
+        .chart-container {
+            background-color: var(--card-color);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+        
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .chart-title {
+            font-size: 20px;
+            font-weight: bold;
+        }
+        
+        .chart-controls {
+            display: flex;
+            gap: 10px;
+        }
+        
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: var(--secondary-color);
+        }
+        
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+        
+        @media (max-width: 768px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            header {
+                flex-direction: column;
+                gap: 20px;
+            }
+            
+            .stock-info {
+                width: 100%;
+                justify-content: space-between;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Real-time Stock Market Dashboard</h1>
+            <div class="stock-info">
+                <div class="stock-card">
+                    <div class="stock-symbol">AAPL</div>
+                    <div class="stock-price">$175.43</div>
+                    <div class="stock-change positive">+1.24%</div>
+                </div>
+                <div class="stock-card">
+                    <div class="stock-symbol">MSFT</div>
+                    <div class="stock-price">$337.42</div>
+                    <div class="stock-change positive">+0.87%</div>
+                </div>
+                <div class="stock-card">
+                    <div class="stock-symbol">GOOGL</div>
+                    <div class="stock-price">$138.21</div>
+                    <div class="stock-change negative">-0.32%</div>
+                </div>
+            </div>
+        </header>
+        
+        <div class="chart-container">
+            <div class="chart-header">
+                <div class="chart-title">AAPL - Apple Inc.</div>
+                <div class="chart-controls">
+                    <button id="time-1d">1D</button>
+                    <button id="time-1w">1W</button>
+                    <button id="time-1m">1M</button>
+                    <button id="time-3m">3M</button>
+                </div>
+            </div>
+            <canvas id="mainChart"></canvas>
+        </div>
+        
+        <div class="charts-grid">
+            <div class="chart-container">
+                <div class="chart-header">
+                    <div class="chart-title">Volume</div>
+                </div>
+                <canvas id="volumeChart"></canvas>
+            </div>
+            
+            <div class="chart-container">
+                <div class="chart-header">
+                    <div class="chart-title">Market Comparison</div>
+                </div>
+                <canvas id="comparisonChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Generate random stock data
+        function generateStockData(initialPrice, points, volatility) {
+            const data = [];
+            let price = initialPrice;
+            
+            for (let i = 0; i < points; i++) {
+                // Random walk with slight upward bias
+                const changePercent = (Math.random() - 0.45) * volatility;
+                price = price * (1 + changePercent / 100);
+                data.push(price);
+            }
+            
+            return data;
+        }
+        
+        // Generate time labels
+        function generateTimeLabels(points, interval) {
+            const labels = [];
+            const now = new Date();
+            
+            for (let i = points - 1; i >= 0; i--) {
+                const time = new Date(now.getTime() - i * interval);
+                labels.push(time.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'}));
+            }
+            
+            return labels;
+        }
+        
+        // Generate volume data
+        function generateVolumeData(points) {
+            const data = [];
+            const baseVolume = 1000000;
+            
+            for (let i = 0; i < points; i++) {
+                data.push(baseVolume + Math.random() * baseVolume * 0.5);
+            }
+            
+            return data;
+        }
+        
+        // Update stock cards with new prices
+        function updateStockCards() {
+            const stocks = [
+                { symbol: 'AAPL', price: 175.43, change: 1.24 },
+                { symbol: 'MSFT', price: 337.42, change: 0.87 },
+                { symbol: 'GOOGL', price: 138.21, change: -0.32 }
+            ];
+            
+            stocks.forEach(stock => {
+                // Simulate small price changes
+                const changePercent = (Math.random() - 0.5) * 0.2;
+                const newPrice = stock.price * (1 + changePercent / 100);
+                const newChange = stock.change + changePercent;
+                
+                // Update DOM
+                const card = document.querySelector(`.stock-card .stock-symbol:contains("${stock.symbol}")`).parentElement;
+                card.querySelector('.stock-price').textContent = `$${newPrice.toFixed(2)}`;
+                
+                const changeElement = card.querySelector('.stock-change');
+                changeElement.textContent = `${newChange >= 0 ? '+' : ''}${newChange.toFixed(2)}%`;
+                changeElement.className = `stock-change ${newChange >= 0 ? 'positive' : 'negative'}`;
+            });
+        }
+        
+        // Initialize charts
+        document.addEventListener('DOMContentLoaded', function() {
+            // Main price chart
+            const mainCtx = document.getElementById('mainChart').getContext('2d');
+            const priceData = generateStockData(175, 100, 0.5);
+            const timeLabels = generateTimeLabels(100, 60000); // 1 minute intervals
+            
+            const mainChart = new Chart(mainCtx, {
+                type: 'line',
+                data: {
+                    labels: timeLabels,
+                    datasets: [{
+                        label: 'AAPL',
+                        data: priceData,
+                        borderColor: '#2962ff',
+                        backgroundColor: 'rgba(41, 98, 255, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        },
+                        y: {
+                            position: 'right',
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Volume chart
+            const volumeCtx = document.getElementById('volumeChart').getContext('2d');
+            const volumeData = generateVolumeData(100);
+            
+            const volumeChart = new Chart(volumeCtx, {
+                type: 'bar',
+                data: {
+                    labels: timeLabels,
+                    datasets: [{
+                        label: 'Volume',
+                        data: volumeData,
+                        backgroundColor: 'rgba(41, 98, 255, 0.7)',
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                maxTicksLimit: 6
+                            }
+                        },
+                        y: {
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    if (value >= 1000000) {
+                                        return (value / 1000000).toFixed(1) + 'M';
+                                    }
+                                    return value;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Comparison chart
+            const comparisonCtx = document.getElementById('comparisonChart').getContext('2d');
+            const aaplData = generateStockData(175, 50, 0.5);
+            const msftData = generateStockData(337, 50, 0.5);
+            const googlData = generateStockData(138, 50, 0.5);
+            const comparisonLabels = generateTimeLabels(50, 120000); // 2 minute intervals
+            
+            const comparisonChart = new Chart(comparisonCtx, {
+                type: 'line',
+                data: {
+                    labels: comparisonLabels,
+                    datasets: [
+                        {
+                            label: 'AAPL',
+                            data: aaplData,
+                            borderColor: '#2962ff',
+                            backgroundColor: 'transparent',
+                            borderWidth: 2,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'MSFT',
+                            data: msftData,
+                            borderColor: '#00c853',
+                            backgroundColor: 'transparent',
+                            borderWidth: 2,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'GOOGL',
+                            data: googlData,
+                            borderColor: '#ff1744',
+                            backgroundColor: 'transparent',
+                            borderWidth: 2,
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                maxTicksLimit: 6
+                            }
+                        },
+                        y: {
+                            position: 'right',
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Time period buttons
+            document.getElementById('time-1d').addEventListener('click', function() {
+                alert('Switching to 1 day view - would connect to real data source');
+            });
+            
+            document.getElementById('time-1w').addEventListener('click', function() {
+                alert('Switching to 1 week view - would connect to real data source');
+            });
+            
+            document.getElementById('time-1m').addEventListener('click', function() {
+                alert('Switching to 1 month view - would connect to real data source');
+            });
+            
+            document.getElementById('time-3m').addEventListener('click', function() {
+                alert('Switching to 3 month view - would connect to real data source');
+            });
+            
+            // Update data every 5 seconds to simulate real-time updates
+            setInterval(function() {
+                // Update main chart
+                const newPrice = mainChart.data.datasets[0].data[mainChart.data.datasets[0].data.length - 1];
+                const changePercent = (Math.random() - 0.5) * 0.2;
+                const updatedPrice = newPrice * (1 + changePercent / 100);
+                
+                // Remove first data point and add new one
+                mainChart.data.labels.push(generateTimeLabels(1, 60000)[0]);
+                mainChart.data.labels.shift();
+                mainChart.data.datasets[0].data.push(updatedPrice);
+                mainChart.data.datasets[0].data.shift();
+                
+                mainChart.update('none');
+                
+                // Update volume chart
+                volumeChart.data.labels.push(generateTimeLabels(1, 60000)[0]);
+                volumeChart.data.labels.shift();
+                volumeChart.data.datasets[0].data.push(generateVolumeData(1)[0]);
+                volumeChart.data.datasets[0].data.shift();
+                
+                volumeChart.update('none');
+                
+                // Update comparison chart
+                comparisonChart.data.labels.push(generateTimeLabels(1, 120000)[0]);
+                comparisonChart.data.labels.shift();
+                
+                comparisonChart.data.datasets[0].data.push(
+                    comparisonChart.data.datasets[0].data[comparisonChart.data.datasets[0].data.length - 1] * (1 + (Math.random() - 0.5) * 0.2 / 100)
+                );
+                comparisonChart.data.datasets[0].data.shift();
+                
+                comparisonChart.data.datasets[1].data.push(
+                    comparisonChart.data.datasets[1].data[comparisonChart.data.datasets[1].data.length - 1] * (1 + (Math.random() - 0.5) * 0.2 / 100)
+                );
+                comparisonChart.data.datasets[1].data.shift();
+                
+                comparisonChart.data.datasets[2].data.push(
+                    comparisonChart.data.datasets[2].data[comparisonChart.data.datasets[2].data.length - 1] * (1 + (Math.random() - 0.5) * 0.2 / 100)
+                );
+                comparisonChart.data.datasets[2].data.shift();
+                
+                comparisonChart.update('none');
+                
+                // Update stock cards
+                updateStockCards();
+            }, 5000);
+        });
+    </script>
+</body>
+</html>
