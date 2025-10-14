@@ -104,6 +104,7 @@
             margin-bottom: 30px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
             position: relative;
+            height: 500px;
         }
         
         .chart-header {
@@ -143,6 +144,11 @@
         button.active {
             background-color: var(--secondary-color);
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+        
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
         }
         
         .charts-grid {
@@ -190,6 +196,22 @@
             height: 300px;
             font-size: 18px;
             color: var(--primary-color);
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .spinner {
+            border: 4px solid rgba(255, 215, 0, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid var(--primary-color);
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
         
         .status-indicator {
@@ -206,6 +228,15 @@
             border-radius: 50%;
             background-color: var(--positive-color);
             animation: pulse 2s infinite;
+        }
+        
+        .error-message {
+            background-color: var(--negative-color);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            text-align: center;
         }
         
         @keyframes pulse {
@@ -239,6 +270,10 @@
                 width: 100%;
                 justify-content: space-between;
             }
+            
+            .chart-container {
+                height: 400px;
+            }
         }
     </style>
 </head>
@@ -248,17 +283,19 @@
             <h1><span class="logo">💰</span> Nippon Gold ETF Tracker</h1>
             <div class="stock-info">
                 <div class="stock-card">
-                    <div class="stock-symbol">GOLDBEES</div>
-                    <div class="stock-price" id="current-price">₹5,430.25</div>
-                    <div class="stock-change positive" id="price-change">+0.85%</div>
+                    <div class="stock-symbol">GOLDBEES.NS</div>
+                    <div class="stock-price" id="current-price">Loading...</div>
+                    <div class="stock-change" id="price-change">-</div>
                 </div>
                 <div class="stock-card">
                     <div class="stock-symbol">NAV</div>
-                    <div class="stock-price" id="nav-price">₹5,428.70</div>
+                    <div class="stock-price" id="nav-price">Loading...</div>
                     <div class="stock-change" id="nav-change">-</div>
                 </div>
             </div>
         </header>
+        
+        <div id="error-container"></div>
         
         <div class="chart-container">
             <div class="chart-header">
@@ -272,12 +309,13 @@
                 </div>
             </div>
             <div class="loading" id="chart-loading">
-                Loading chart data...
+                <div class="spinner"></div>
+                <div>Fetching real-time data from Alpha Vantage...</div>
             </div>
             <canvas id="mainChart" style="display: none;"></canvas>
             <div class="status-indicator">
                 <div class="status-dot"></div>
-                <span>Live data updating</span>
+                <span>Live data from Alpha Vantage API</span>
             </div>
         </div>
         
@@ -318,27 +356,27 @@
                 <div class="info-title">Performance Metrics</div>
                 <div class="info-item">
                     <span class="info-label">Today's High:</span>
-                    <span class="info-value" id="today-high">₹5,450.00</span>
+                    <span class="info-value" id="today-high">-</span>
                 </div>
                 <div class="info-item">
                     <span class="info-label">Today's Low:</span>
-                    <span class="info-value" id="today-low">₹5,410.50</span>
+                    <span class="info-value" id="today-low">-</span>
                 </div>
                 <div class="info-item">
                     <span class="info-label">52W High:</span>
-                    <span class="info-value" id="year-high">₹5,680.25</span>
+                    <span class="info-value" id="year-high">-</span>
                 </div>
                 <div class="info-item">
                     <span class="info-label">52W Low:</span>
-                    <span class="info-value" id="year-low">₹4,890.75</span>
+                    <span class="info-value" id="year-low">-</span>
                 </div>
                 <div class="info-item">
                     <span class="info-label">Volume:</span>
-                    <span class="info-value" id="volume">2.5M</span>
+                    <span class="info-value" id="volume">-</span>
                 </div>
                 <div class="info-item">
-                    <span class="info-label">Avg. Daily Volume:</span>
-                    <span class="info-value">3.2M</span>
+                    <span class="info-label">Last Updated:</span>
+                    <span class="info-value" id="last-updated">-</span>
                 </div>
             </div>
         </div>
@@ -346,8 +384,8 @@
 
     <script>
         // Configuration
+        const API_KEY = 'AE0OZO6XAFV5UCF9';
         const SYMBOL = 'GOLDBEES.NS';
-        const BASE_PRICE = 5430.25;
         
         // DOM Elements
         const currentPriceEl = document.getElementById('current-price');
@@ -359,8 +397,10 @@
         const yearHighEl = document.getElementById('year-high');
         const yearLowEl = document.getElementById('year-low');
         const volumeEl = document.getElementById('volume');
+        const lastUpdatedEl = document.getElementById('last-updated');
         const chartLoadingEl = document.getElementById('chart-loading');
         const mainChartCanvas = document.getElementById('mainChart');
+        const errorContainer = document.getElementById('error-container');
         
         // Time period buttons
         const timeButtons = {
@@ -373,137 +413,308 @@
         
         // Chart instance
         let mainChart;
+        let currentData = null;
         
-        // Generate realistic price data
-        function generatePriceData(initialPrice, dataPoints, volatility) {
-            const data = [];
-            let price = initialPrice;
-            
-            for (let i = 0; i < dataPoints; i++) {
-                // More realistic price movement with slight upward bias
-                const changePercent = (Math.random() - 0.4) * volatility;
-                price = price * (1 + changePercent / 100);
-                
-                // Ensure price doesn't go negative
-                price = Math.max(price, initialPrice * 0.8);
-                
-                data.push(price);
-            }
-            
-            return data;
+        // Show error message
+        function showError(message) {
+            errorContainer.innerHTML = `<div class="error-message">${message}</div>`;
         }
         
-        // Generate time labels based on interval
-        function generateTimeLabels(dataPoints, interval, period) {
-            const labels = [];
-            const now = new Date();
-            
-            if (period === '1d') {
-                // For 1 day, show market hours (9:15 AM to 3:30 PM)
-                const startTime = new Date(now);
-                startTime.setHours(9, 15, 0, 0);
-                
-                for (let i = 0; i < dataPoints; i++) {
-                    const time = new Date(startTime.getTime() + i * interval);
-                    labels.push(time.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'}));
-                }
+        // Clear error message
+        function clearError() {
+            errorContainer.innerHTML = '';
+        }
+        
+        // Format number as Indian currency
+        function formatINR(amount) {
+            return '₹' + amount.toLocaleString('en-IN');
+        }
+        
+        // Format large numbers
+        function formatVolume(volume) {
+            if (volume >= 10000000) {
+                return (volume / 10000000).toFixed(2) + ' Cr';
+            } else if (volume >= 100000) {
+                return (volume / 100000).toFixed(2) + ' L';
             } else {
-                // For longer periods, show dates
-                for (let i = dataPoints - 1; i >= 0; i--) {
-                    const date = new Date(now.getTime() - i * interval);
-                    
-                    if (period === '1w' || period === '1m') {
-                        labels.push(date.toLocaleDateString([], {month: 'short', day: 'numeric'}));
-                    } else {
-                        labels.push(date.toLocaleDateString([], {month: 'short', year: 'numeric'}));
-                    }
-                }
+                return volume.toLocaleString('en-IN');
+            }
+        }
+        
+        // Fetch data from Alpha Vantage
+        async function fetchAlphaVantageData(functionName, symbol, interval = null) {
+            clearError();
+            
+            let url = `https://www.alphavantage.co/query?function=${functionName}&symbol=${symbol}&apikey=${API_KEY}`;
+            
+            if (interval) {
+                url += `&interval=${interval}`;
             }
             
-            return labels;
-        }
-        
-        // Calculate interval based on period
-        function getIntervalForPeriod(period) {
-            switch(period) {
-                case '1d': return 5 * 60 * 1000; // 5 minutes for 1 day
-                case '1w': return 24 * 60 * 60 * 1000; // 1 day for 1 week
-                case '1m': return 24 * 60 * 60 * 1000; // 1 day for 1 month
-                case '3m': return 3 * 24 * 60 * 60 * 1000; // 3 days for 3 months
-                case '1y': return 7 * 24 * 60 * 60 * 1000; // 1 week for 1 year
-                default: return 5 * 60 * 1000;
+            if (functionName === 'TIME_SERIES_INTRADAY') {
+                url += '&outputsize=compact';
+            }
+            
+            try {
+                const response = await axios.get(url);
+                
+                if (response.data['Error Message']) {
+                    throw new Error('Invalid API call or symbol not found');
+                }
+                
+                if (response.data['Note']) {
+                    throw new Error('API rate limit exceeded. Please wait a minute.');
+                }
+                
+                return response.data;
+            } catch (error) {
+                console.error('API Error:', error);
+                throw error;
             }
         }
         
-        // Calculate number of data points based on period
-        function getDataPointsForPeriod(period) {
+        // Parse Alpha Vantage data for different time frames
+        function parseAlphaVantageData(data, period) {
+            let timeSeries, metadata;
+            
             switch(period) {
-                case '1d': return 75; // Market hours in 5-min intervals
-                case '1w': return 7;
-                case '1m': return 30;
-                case '3m': return 30;
-                case '1y': return 52;
-                default: return 75;
+                case '1d':
+                    timeSeries = data['Time Series (5min)'];
+                    metadata = data['Meta Data'];
+                    break;
+                case '1w':
+                case '1m':
+                    timeSeries = data['Time Series (Daily)'];
+                    metadata = data['Meta Data'];
+                    break;
+                default:
+                    timeSeries = data['Time Series (Daily)'];
+                    metadata = data['Meta Data'];
             }
+            
+            if (!timeSeries) {
+                throw new Error('No data available for the selected period');
+            }
+            
+            const dates = Object.keys(timeSeries).sort();
+            const prices = dates.map(date => parseFloat(timeSeries[date]['4. close']));
+            const volumes = dates.map(date => parseInt(timeSeries[date]['5. volume']));
+            const highs = dates.map(date => parseFloat(timeSeries[date]['2. high']));
+            const lows = dates.map(date => parseFloat(timeSeries[date]['3. low']));
+            
+            // Get current price data
+            const latestDate = dates[dates.length - 1];
+            const currentData = timeSeries[latestDate];
+            
+            return {
+                dates,
+                prices,
+                volumes,
+                highs,
+                lows,
+                currentPrice: parseFloat(currentData['4. close']),
+                currentHigh: parseFloat(currentData['2. high']),
+                currentLow: parseFloat(currentData['3. low']),
+                currentVolume: parseInt(currentData['5. volume']),
+                lastRefreshed: metadata['3. Last Refreshed']
+            };
         }
         
         // Update price display
-        function updatePriceDisplay(price, changePercent) {
-            currentPriceEl.textContent = `₹${price.toFixed(2)}`;
+        function updatePriceDisplay(currentPrice, previousClose) {
+            currentPriceEl.textContent = formatINR(currentPrice);
             
-            const changeValue = (price - BASE_PRICE) / BASE_PRICE * 100;
-            const isPositive = changeValue >= 0;
-            
-            priceChangeEl.textContent = `${isPositive ? '+' : ''}${changeValue.toFixed(2)}%`;
-            priceChangeEl.className = `stock-change ${isPositive ? 'positive' : 'negative'}`;
-            
-            // Update NAV with slight variation
-            const navPrice = price * (1 - 0.0005); // NAV is slightly lower than market price
-            navPriceEl.textContent = `₹${navPrice.toFixed(2)}`;
-            
-            const navChange = (navPrice - (BASE_PRICE * 0.9995)) / (BASE_PRICE * 0.9995) * 100;
-            navChangeEl.textContent = `${navChange >= 0 ? '+' : ''}${navChange.toFixed(2)}%`;
-            navChangeEl.className = `stock-change ${navChange >= 0 ? 'positive' : 'negative'}`;
+            if (previousClose) {
+                const changeValue = currentPrice - previousClose;
+                const changePercent = (changeValue / previousClose) * 100;
+                const isPositive = changeValue >= 0;
+                
+                priceChangeEl.textContent = `${isPositive ? '+' : ''}${changeValue.toFixed(2)} (${isPositive ? '+' : ''}${changePercent.toFixed(2)}%)`;
+                priceChangeEl.className = `stock-change ${isPositive ? 'positive' : 'negative'}`;
+                
+                // Update NAV with slight variation (typically NAV is slightly different from market price)
+                const navPrice = currentPrice * (1 - 0.0005);
+                navPriceEl.textContent = formatINR(navPrice);
+                
+                const navChange = navPrice - (previousClose * 0.9995);
+                const navChangePercent = (navChange / (previousClose * 0.9995)) * 100;
+                
+                navChangeEl.textContent = `${navChange >= 0 ? '+' : ''}${navChange.toFixed(2)} (${navChangePercent >= 0 ? '+' : ''}${navChangePercent.toFixed(2)}%)`;
+                navChangeEl.className = `stock-change ${navChange >= 0 ? 'positive' : 'negative'}`;
+            }
         }
         
         // Update performance metrics
-        function updatePerformanceMetrics(priceData) {
-            const high = Math.max(...priceData);
-            const low = Math.min(...priceData);
+        function updatePerformanceMetrics(parsedData) {
+            const high = Math.max(...parsedData.highs);
+            const low = Math.min(...parsedData.lows);
             
-            todayHighEl.textContent = `₹${high.toFixed(2)}`;
-            todayLowEl.textContent = `₹${low.toFixed(2)}`;
-            
-            // For demo purposes, set 52W high/low relative to current price
-            yearHighEl.textContent = `₹${(high * 1.05).toFixed(2)}`;
-            yearLowEl.textContent = `₹${(low * 0.9).toFixed(2)}`;
-            
-            // Generate random volume
-            const volume = Math.floor(Math.random() * 2000000) + 1500000;
-            volumeEl.textContent = `${(volume / 1000000).toFixed(1)}M`;
+            todayHighEl.textContent = formatINR(parsedData.currentHigh);
+            todayLowEl.textContent = formatINR(parsedData.currentLow);
+            yearHighEl.textContent = formatINR(high);
+            yearLowEl.textContent = formatINR(low);
+            volumeEl.textContent = formatVolume(parsedData.currentVolume);
+            lastUpdatedEl.textContent = new Date(parsedData.lastRefreshed).toLocaleString();
         }
         
-        // Initialize chart
-        function initializeChart(period = '1d') {
+        // Initialize chart with real data
+        async function initializeChart(period = '1d') {
+            clearError();
+            
+            // Disable buttons during loading
+            Object.values(timeButtons).forEach(button => {
+                button.disabled = true;
+            });
+            
+            try {
+                let data;
+                
+                switch(period) {
+                    case '1d':
+                        data = await fetchAlphaVantageData('TIME_SERIES_INTRADAY', SYMBOL, '5min');
+                        break;
+                    case '1w':
+                    case '1m':
+                    case '3m':
+                    case '1y':
+                        data = await fetchAlphaVantageData('TIME_SERIES_DAILY', SYMBOL);
+                        break;
+                    default:
+                        data = await fetchAlphaVantageData('TIME_SERIES_INTRADAY', SYMBOL, '5min');
+                }
+                
+                const parsedData = parseAlphaVantageData(data, period);
+                currentData = parsedData;
+                
+                // Hide loading, show chart
+                chartLoadingEl.style.display = 'none';
+                mainChartCanvas.style.display = 'block';
+                
+                const ctx = mainChartCanvas.getContext('2d');
+                
+                // Destroy existing chart if it exists
+                if (mainChart) {
+                    mainChart.destroy();
+                }
+                
+                // Format labels based on period
+                let labels;
+                if (period === '1d') {
+                    labels = parsedData.dates.map(date => {
+                        const time = new Date(date);
+                        return time.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+                    });
+                } else {
+                    labels = parsedData.dates.map(date => {
+                        const dateObj = new Date(date);
+                        return dateObj.toLocaleDateString([], {month: 'short', day: 'numeric'});
+                    });
+                }
+                
+                // Create new chart
+                mainChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: SYMBOL,
+                            data: parsedData.prices,
+                            borderColor: '#ffd700',
+                            backgroundColor: 'rgba(255, 215, 0, 0.1)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: 0,
+                            pointHoverRadius: 5
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false,
+                                callbacks: {
+                                    label: function(context) {
+                                        return `Price: ${formatINR(context.parsed.y)}`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: {
+                                    display: false,
+                                    color: 'rgba(255, 255, 255, 0.1)'
+                                },
+                                ticks: {
+                                    color: 'rgba(255, 255, 255, 0.7)',
+                                    maxTicksLimit: 8
+                                }
+                            },
+                            y: {
+                                position: 'right',
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.1)'
+                                },
+                                ticks: {
+                                    color: 'rgba(255, 255, 255, 0.7)',
+                                    callback: function(value) {
+                                        return formatINR(value);
+                                    }
+                                }
+                            }
+                        },
+                        interaction: {
+                            intersect: false,
+                            mode: 'index'
+                        }
+                    }
+                });
+                
+                // Calculate previous close for change percentage
+                const previousClose = parsedData.prices.length > 1 ? parsedData.prices[parsedData.prices.length - 2] : null;
+                
+                // Update price display and metrics
+                updatePriceDisplay(parsedData.currentPrice, previousClose);
+                updatePerformanceMetrics(parsedData);
+                
+            } catch (error) {
+                console.error('Error initializing chart:', error);
+                showError(`Error loading data: ${error.message}. Using simulated data instead.`);
+                
+                // Fallback to simulated data
+                initializeWithSimulatedData(period);
+            } finally {
+                // Re-enable buttons
+                Object.values(timeButtons).forEach(button => {
+                    button.disabled = false;
+                });
+            }
+        }
+        
+        // Fallback to simulated data if API fails
+        function initializeWithSimulatedData(period) {
+            // Simulated data implementation (same as before)
             const dataPoints = getDataPointsForPeriod(period);
             const interval = getIntervalForPeriod(period);
             
-            // Generate initial data
-            const priceData = generatePriceData(BASE_PRICE, dataPoints, 0.3);
+            const priceData = generatePriceData(5430, dataPoints, 0.3);
             const timeLabels = generateTimeLabels(dataPoints, interval, period);
             
-            // Hide loading, show chart
             chartLoadingEl.style.display = 'none';
             mainChartCanvas.style.display = 'block';
             
             const ctx = mainChartCanvas.getContext('2d');
             
-            // Destroy existing chart if it exists
             if (mainChart) {
                 mainChart.destroy();
             }
             
-            // Create new chart
             mainChart = new Chart(ctx, {
                 type: 'line',
                 data: {
@@ -532,7 +743,7 @@
                             intersect: false,
                             callbacks: {
                                 label: function(context) {
-                                    return `Price: ₹${context.parsed.y.toFixed(2)}`;
+                                    return `Price: ${formatINR(context.parsed.y)}`;
                                 }
                             }
                         }
@@ -556,7 +767,7 @@
                             ticks: {
                                 color: 'rgba(255, 255, 255, 0.7)',
                                 callback: function(value) {
-                                    return '₹' + value.toLocaleString();
+                                    return formatINR(value);
                                 }
                             }
                         }
@@ -568,64 +779,103 @@
                 }
             });
             
-            // Update price display and metrics
             const currentPrice = priceData[priceData.length - 1];
-            updatePriceDisplay(currentPrice);
-            updatePerformanceMetrics(priceData);
+            const previousClose = priceData.length > 1 ? priceData[priceData.length - 2] : null;
+            
+            updatePriceDisplay(currentPrice, previousClose);
+            updatePerformanceMetrics({
+                currentHigh: Math.max(...priceData),
+                currentLow: Math.min(...priceData),
+                highs: priceData,
+                lows: priceData,
+                currentVolume: Math.floor(Math.random() * 2000000) + 1500000,
+                lastRefreshed: new Date().toISOString()
+            });
         }
         
-        // Update chart with new data point
-        function updateChart() {
-            if (!mainChart) return;
+        // Simulated data functions (fallback)
+        function generatePriceData(initialPrice, dataPoints, volatility) {
+            const data = [];
+            let price = initialPrice;
             
-            const data = mainChart.data.datasets[0].data;
-            const lastPrice = data[data.length - 1];
-            
-            // Generate new price with realistic movement
-            const changePercent = (Math.random() - 0.45) * 0.2;
-            const newPrice = lastPrice * (1 + changePercent / 100);
-            
-            // Add new data point and remove the first one
-            data.push(newPrice);
-            data.shift();
-            
-            // Update labels for 1D view (shift time forward)
-            if (Object.keys(timeButtons).find(key => timeButtons[key].classList.contains('active')) === '1d') {
-                const labels = mainChart.data.labels;
-                const now = new Date();
-                
-                // Remove first label and add new one
-                labels.shift();
-                
-                // For 1D view, increment time by 5 minutes
-                const lastTime = new Date();
-                lastTime.setHours(parseInt(labels[labels.length - 1].split(':')[0]), 
-                                 parseInt(labels[labels.length - 1].split(':')[1]));
-                
-                const newTime = new Date(lastTime.getTime() + 5 * 60 * 1000);
-                labels.push(newTime.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'}));
+            for (let i = 0; i < dataPoints; i++) {
+                const changePercent = (Math.random() - 0.4) * volatility;
+                price = price * (1 + changePercent / 100);
+                price = Math.max(price, initialPrice * 0.8);
+                data.push(price);
             }
             
-            // Update the chart
-            mainChart.update('none');
+            return data;
+        }
+        
+        function generateTimeLabels(dataPoints, interval, period) {
+            const labels = [];
+            const now = new Date();
             
-            // Update price display and metrics
-            updatePriceDisplay(newPrice);
-            updatePerformanceMetrics(data);
+            if (period === '1d') {
+                const startTime = new Date(now);
+                startTime.setHours(9, 15, 0, 0);
+                
+                for (let i = 0; i < dataPoints; i++) {
+                    const time = new Date(startTime.getTime() + i * interval);
+                    labels.push(time.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'}));
+                }
+            } else {
+                for (let i = dataPoints - 1; i >= 0; i--) {
+                    const date = new Date(now.getTime() - i * interval);
+                    
+                    if (period === '1w' || period === '1m') {
+                        labels.push(date.toLocaleDateString([], {month: 'short', day: 'numeric'}));
+                    } else {
+                        labels.push(date.toLocaleDateString([], {month: 'short', year: 'numeric'}));
+                    }
+                }
+            }
+            
+            return labels;
+        }
+        
+        function getIntervalForPeriod(period) {
+            switch(period) {
+                case '1d': return 5 * 60 * 1000;
+                case '1w': return 24 * 60 * 60 * 1000;
+                case '1m': return 24 * 60 * 60 * 1000;
+                case '3m': return 3 * 24 * 60 * 60 * 1000;
+                case '1y': return 7 * 24 * 60 * 60 * 1000;
+                default: return 5 * 60 * 1000;
+            }
+        }
+        
+        function getDataPointsForPeriod(period) {
+            switch(period) {
+                case '1d': return 75;
+                case '1w': return 7;
+                case '1m': return 30;
+                case '3m': return 30;
+                case '1y': return 52;
+                default: return 75;
+            }
         }
         
         // Set active time period
         function setActivePeriod(period) {
-            // Remove active class from all buttons
             Object.values(timeButtons).forEach(button => {
                 button.classList.remove('active');
             });
             
-            // Add active class to clicked button
             timeButtons[period].classList.add('active');
-            
-            // Reinitialize chart with new period
             initializeChart(period);
+        }
+        
+        // Refresh data
+        async function refreshData() {
+            const activePeriod = Object.keys(timeButtons).find(key => 
+                timeButtons[key].classList.contains('active')
+            );
+            
+            if (activePeriod) {
+                await initializeChart(activePeriod);
+            }
         }
         
         // Event listeners for time period buttons
@@ -640,14 +890,8 @@
             // Initialize with 1D view
             initializeChart('1d');
             
-            // Update chart every 5 seconds to simulate real-time data
-            setInterval(updateChart, 5000);
-            
-            // Simulate initial API delay
-            setTimeout(() => {
-                chartLoadingEl.style.display = 'none';
-                mainChartCanvas.style.display = 'block';
-            }, 1500);
+            // Refresh data every 2 minutes (respecting API rate limits)
+            setInterval(refreshData, 120000);
         });
     </script>
 </body>
