@@ -1,18 +1,18 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Real-time Stock Market Charts</title>
+    <title>Nippon Gold ETF - Real-time Chart</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <style>
         :root {
-            --primary-color: #2962ff;
-            --secondary-color: #0d47a1;
-            --background-color: #f5f7fa;
-            --card-color: #ffffff;
-            --text-color: #333333;
+            --primary-color: #ffd700;
+            --secondary-color: #b8860b;
+            --background-color: #1a1a1a;
+            --card-color: #2d2d2d;
+            --text-color: #f5f5f5;
             --positive-color: #00c853;
             --negative-color: #ff1744;
         }
@@ -28,6 +28,7 @@
             background-color: var(--background-color);
             color: var(--text-color);
             padding: 20px;
+            line-height: 1.6;
         }
         
         .container {
@@ -41,12 +42,19 @@
             align-items: center;
             margin-bottom: 30px;
             padding-bottom: 15px;
-            border-bottom: 1px solid #e0e0e0;
+            border-bottom: 1px solid #444;
         }
         
         h1 {
             color: var(--primary-color);
             font-size: 28px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .logo {
+            font-size: 32px;
         }
         
         .stock-info {
@@ -58,15 +66,17 @@
             background-color: var(--card-color);
             border-radius: 10px;
             padding: 15px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
             min-width: 150px;
             text-align: center;
+            border-left: 4px solid var(--primary-color);
         }
         
         .stock-symbol {
             font-size: 18px;
             font-weight: bold;
             margin-bottom: 5px;
+            color: var(--primary-color);
         }
         
         .stock-price {
@@ -92,7 +102,8 @@
             border-radius: 10px;
             padding: 20px;
             margin-bottom: 30px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            position: relative;
         }
         
         .chart-header {
@@ -105,6 +116,7 @@
         .chart-title {
             font-size: 20px;
             font-weight: bold;
+            color: var(--primary-color);
         }
         
         .chart-controls {
@@ -114,22 +126,92 @@
         
         button {
             background-color: var(--primary-color);
-            color: white;
+            color: #000;
             border: none;
             padding: 8px 15px;
             border-radius: 5px;
             cursor: pointer;
-            transition: background-color 0.3s;
+            transition: all 0.3s;
+            font-weight: 600;
         }
         
         button:hover {
             background-color: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+        
+        button.active {
+            background-color: var(--secondary-color);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
         }
         
         .charts-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 2fr 1fr;
             gap: 30px;
+        }
+        
+        .info-panel {
+            background-color: var(--card-color);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        
+        .info-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: var(--primary-color);
+            border-bottom: 1px solid #444;
+            padding-bottom: 10px;
+        }
+        
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #333;
+        }
+        
+        .info-label {
+            color: #aaa;
+        }
+        
+        .info-value {
+            font-weight: 600;
+        }
+        
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 300px;
+            font-size: 18px;
+            color: var(--primary-color);
+        }
+        
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: var(--positive-color);
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
         }
         
         @media (max-width: 768px) {
@@ -146,146 +228,296 @@
                 width: 100%;
                 justify-content: space-between;
             }
+            
+            .chart-header {
+                flex-direction: column;
+                gap: 15px;
+                align-items: flex-start;
+            }
+            
+            .chart-controls {
+                width: 100%;
+                justify-content: space-between;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>Real-time Stock Market Dashboard</h1>
+            <h1><span class="logo">💰</span> Nippon Gold ETF Tracker</h1>
             <div class="stock-info">
                 <div class="stock-card">
-                    <div class="stock-symbol">AAPL</div>
-                    <div class="stock-price">$175.43</div>
-                    <div class="stock-change positive">+1.24%</div>
+                    <div class="stock-symbol">GOLDBEES</div>
+                    <div class="stock-price" id="current-price">₹5,430.25</div>
+                    <div class="stock-change positive" id="price-change">+0.85%</div>
                 </div>
                 <div class="stock-card">
-                    <div class="stock-symbol">MSFT</div>
-                    <div class="stock-price">$337.42</div>
-                    <div class="stock-change positive">+0.87%</div>
-                </div>
-                <div class="stock-card">
-                    <div class="stock-symbol">GOOGL</div>
-                    <div class="stock-price">$138.21</div>
-                    <div class="stock-change negative">-0.32%</div>
+                    <div class="stock-symbol">NAV</div>
+                    <div class="stock-price" id="nav-price">₹5,428.70</div>
+                    <div class="stock-change" id="nav-change">-</div>
                 </div>
             </div>
         </header>
         
         <div class="chart-container">
             <div class="chart-header">
-                <div class="chart-title">AAPL - Apple Inc.</div>
+                <div class="chart-title">Nippon India Gold Bees ETF (GOLDBEES.NS)</div>
                 <div class="chart-controls">
-                    <button id="time-1d">1D</button>
+                    <button id="time-1d" class="active">1D</button>
                     <button id="time-1w">1W</button>
                     <button id="time-1m">1M</button>
                     <button id="time-3m">3M</button>
+                    <button id="time-1y">1Y</button>
                 </div>
             </div>
-            <canvas id="mainChart"></canvas>
+            <div class="loading" id="chart-loading">
+                Loading chart data...
+            </div>
+            <canvas id="mainChart" style="display: none;"></canvas>
+            <div class="status-indicator">
+                <div class="status-dot"></div>
+                <span>Live data updating</span>
+            </div>
         </div>
         
         <div class="charts-grid">
-            <div class="chart-container">
-                <div class="chart-header">
-                    <div class="chart-title">Volume</div>
+            <div class="info-panel">
+                <div class="info-title">ETF Information</div>
+                <div class="info-item">
+                    <span class="info-label">Fund Name:</span>
+                    <span class="info-value">Nippon India Gold Bees ETF</span>
                 </div>
-                <canvas id="volumeChart"></canvas>
+                <div class="info-item">
+                    <span class="info-label">Ticker Symbol:</span>
+                    <span class="info-value">GOLDBEES.NS</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Expense Ratio:</span>
+                    <span class="info-value">0.49%</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">AUM:</span>
+                    <span class="info-value">₹5,280 Cr</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Underlying Asset:</span>
+                    <span class="info-value">Physical Gold</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Gold Purity:</span>
+                    <span class="info-value">99.5%</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Inception Date:</span>
+                    <span class="info-value">March 2007</span>
+                </div>
             </div>
             
-            <div class="chart-container">
-                <div class="chart-header">
-                    <div class="chart-title">Market Comparison</div>
+            <div class="info-panel">
+                <div class="info-title">Performance Metrics</div>
+                <div class="info-item">
+                    <span class="info-label">Today's High:</span>
+                    <span class="info-value" id="today-high">₹5,450.00</span>
                 </div>
-                <canvas id="comparisonChart"></canvas>
+                <div class="info-item">
+                    <span class="info-label">Today's Low:</span>
+                    <span class="info-value" id="today-low">₹5,410.50</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">52W High:</span>
+                    <span class="info-value" id="year-high">₹5,680.25</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">52W Low:</span>
+                    <span class="info-value" id="year-low">₹4,890.75</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Volume:</span>
+                    <span class="info-value" id="volume">2.5M</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Avg. Daily Volume:</span>
+                    <span class="info-value">3.2M</span>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
-        // Generate random stock data
-        function generateStockData(initialPrice, points, volatility) {
+        // Configuration
+        const SYMBOL = 'GOLDBEES.NS';
+        const BASE_PRICE = 5430.25;
+        
+        // DOM Elements
+        const currentPriceEl = document.getElementById('current-price');
+        const priceChangeEl = document.getElementById('price-change');
+        const navPriceEl = document.getElementById('nav-price');
+        const navChangeEl = document.getElementById('nav-change');
+        const todayHighEl = document.getElementById('today-high');
+        const todayLowEl = document.getElementById('today-low');
+        const yearHighEl = document.getElementById('year-high');
+        const yearLowEl = document.getElementById('year-low');
+        const volumeEl = document.getElementById('volume');
+        const chartLoadingEl = document.getElementById('chart-loading');
+        const mainChartCanvas = document.getElementById('mainChart');
+        
+        // Time period buttons
+        const timeButtons = {
+            '1d': document.getElementById('time-1d'),
+            '1w': document.getElementById('time-1w'),
+            '1m': document.getElementById('time-1m'),
+            '3m': document.getElementById('time-3m'),
+            '1y': document.getElementById('time-1y')
+        };
+        
+        // Chart instance
+        let mainChart;
+        
+        // Generate realistic price data
+        function generatePriceData(initialPrice, dataPoints, volatility) {
             const data = [];
             let price = initialPrice;
             
-            for (let i = 0; i < points; i++) {
-                // Random walk with slight upward bias
-                const changePercent = (Math.random() - 0.45) * volatility;
+            for (let i = 0; i < dataPoints; i++) {
+                // More realistic price movement with slight upward bias
+                const changePercent = (Math.random() - 0.4) * volatility;
                 price = price * (1 + changePercent / 100);
+                
+                // Ensure price doesn't go negative
+                price = Math.max(price, initialPrice * 0.8);
+                
                 data.push(price);
             }
             
             return data;
         }
         
-        // Generate time labels
-        function generateTimeLabels(points, interval) {
+        // Generate time labels based on interval
+        function generateTimeLabels(dataPoints, interval, period) {
             const labels = [];
             const now = new Date();
             
-            for (let i = points - 1; i >= 0; i--) {
-                const time = new Date(now.getTime() - i * interval);
-                labels.push(time.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'}));
+            if (period === '1d') {
+                // For 1 day, show market hours (9:15 AM to 3:30 PM)
+                const startTime = new Date(now);
+                startTime.setHours(9, 15, 0, 0);
+                
+                for (let i = 0; i < dataPoints; i++) {
+                    const time = new Date(startTime.getTime() + i * interval);
+                    labels.push(time.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'}));
+                }
+            } else {
+                // For longer periods, show dates
+                for (let i = dataPoints - 1; i >= 0; i--) {
+                    const date = new Date(now.getTime() - i * interval);
+                    
+                    if (period === '1w' || period === '1m') {
+                        labels.push(date.toLocaleDateString([], {month: 'short', day: 'numeric'}));
+                    } else {
+                        labels.push(date.toLocaleDateString([], {month: 'short', year: 'numeric'}));
+                    }
+                }
             }
             
             return labels;
         }
         
-        // Generate volume data
-        function generateVolumeData(points) {
-            const data = [];
-            const baseVolume = 1000000;
+        // Calculate interval based on period
+        function getIntervalForPeriod(period) {
+            switch(period) {
+                case '1d': return 5 * 60 * 1000; // 5 minutes for 1 day
+                case '1w': return 24 * 60 * 60 * 1000; // 1 day for 1 week
+                case '1m': return 24 * 60 * 60 * 1000; // 1 day for 1 month
+                case '3m': return 3 * 24 * 60 * 60 * 1000; // 3 days for 3 months
+                case '1y': return 7 * 24 * 60 * 60 * 1000; // 1 week for 1 year
+                default: return 5 * 60 * 1000;
+            }
+        }
+        
+        // Calculate number of data points based on period
+        function getDataPointsForPeriod(period) {
+            switch(period) {
+                case '1d': return 75; // Market hours in 5-min intervals
+                case '1w': return 7;
+                case '1m': return 30;
+                case '3m': return 30;
+                case '1y': return 52;
+                default: return 75;
+            }
+        }
+        
+        // Update price display
+        function updatePriceDisplay(price, changePercent) {
+            currentPriceEl.textContent = `₹${price.toFixed(2)}`;
             
-            for (let i = 0; i < points; i++) {
-                data.push(baseVolume + Math.random() * baseVolume * 0.5);
+            const changeValue = (price - BASE_PRICE) / BASE_PRICE * 100;
+            const isPositive = changeValue >= 0;
+            
+            priceChangeEl.textContent = `${isPositive ? '+' : ''}${changeValue.toFixed(2)}%`;
+            priceChangeEl.className = `stock-change ${isPositive ? 'positive' : 'negative'}`;
+            
+            // Update NAV with slight variation
+            const navPrice = price * (1 - 0.0005); // NAV is slightly lower than market price
+            navPriceEl.textContent = `₹${navPrice.toFixed(2)}`;
+            
+            const navChange = (navPrice - (BASE_PRICE * 0.9995)) / (BASE_PRICE * 0.9995) * 100;
+            navChangeEl.textContent = `${navChange >= 0 ? '+' : ''}${navChange.toFixed(2)}%`;
+            navChangeEl.className = `stock-change ${navChange >= 0 ? 'positive' : 'negative'}`;
+        }
+        
+        // Update performance metrics
+        function updatePerformanceMetrics(priceData) {
+            const high = Math.max(...priceData);
+            const low = Math.min(...priceData);
+            
+            todayHighEl.textContent = `₹${high.toFixed(2)}`;
+            todayLowEl.textContent = `₹${low.toFixed(2)}`;
+            
+            // For demo purposes, set 52W high/low relative to current price
+            yearHighEl.textContent = `₹${(high * 1.05).toFixed(2)}`;
+            yearLowEl.textContent = `₹${(low * 0.9).toFixed(2)}`;
+            
+            // Generate random volume
+            const volume = Math.floor(Math.random() * 2000000) + 1500000;
+            volumeEl.textContent = `${(volume / 1000000).toFixed(1)}M`;
+        }
+        
+        // Initialize chart
+        function initializeChart(period = '1d') {
+            const dataPoints = getDataPointsForPeriod(period);
+            const interval = getIntervalForPeriod(period);
+            
+            // Generate initial data
+            const priceData = generatePriceData(BASE_PRICE, dataPoints, 0.3);
+            const timeLabels = generateTimeLabels(dataPoints, interval, period);
+            
+            // Hide loading, show chart
+            chartLoadingEl.style.display = 'none';
+            mainChartCanvas.style.display = 'block';
+            
+            const ctx = mainChartCanvas.getContext('2d');
+            
+            // Destroy existing chart if it exists
+            if (mainChart) {
+                mainChart.destroy();
             }
             
-            return data;
-        }
-        
-        // Update stock cards with new prices
-        function updateStockCards() {
-            const stocks = [
-                { symbol: 'AAPL', price: 175.43, change: 1.24 },
-                { symbol: 'MSFT', price: 337.42, change: 0.87 },
-                { symbol: 'GOOGL', price: 138.21, change: -0.32 }
-            ];
-            
-            stocks.forEach(stock => {
-                // Simulate small price changes
-                const changePercent = (Math.random() - 0.5) * 0.2;
-                const newPrice = stock.price * (1 + changePercent / 100);
-                const newChange = stock.change + changePercent;
-                
-                // Update DOM
-                const card = document.querySelector(`.stock-card .stock-symbol:contains("${stock.symbol}")`).parentElement;
-                card.querySelector('.stock-price').textContent = `$${newPrice.toFixed(2)}`;
-                
-                const changeElement = card.querySelector('.stock-change');
-                changeElement.textContent = `${newChange >= 0 ? '+' : ''}${newChange.toFixed(2)}%`;
-                changeElement.className = `stock-change ${newChange >= 0 ? 'positive' : 'negative'}`;
-            });
-        }
-        
-        // Initialize charts
-        document.addEventListener('DOMContentLoaded', function() {
-            // Main price chart
-            const mainCtx = document.getElementById('mainChart').getContext('2d');
-            const priceData = generateStockData(175, 100, 0.5);
-            const timeLabels = generateTimeLabels(100, 60000); // 1 minute intervals
-            
-            const mainChart = new Chart(mainCtx, {
+            // Create new chart
+            mainChart = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: timeLabels,
                     datasets: [{
-                        label: 'AAPL',
+                        label: SYMBOL,
                         data: priceData,
-                        borderColor: '#2962ff',
-                        backgroundColor: 'rgba(41, 98, 255, 0.1)',
+                        borderColor: '#ffd700',
+                        backgroundColor: 'rgba(255, 215, 0, 0.1)',
                         borderWidth: 2,
                         fill: true,
-                        tension: 0.4
+                        tension: 0.4,
+                        pointRadius: 0,
+                        pointHoverRadius: 5
                     }]
                 },
                 options: {
@@ -297,203 +529,125 @@
                         },
                         tooltip: {
                             mode: 'index',
-                            intersect: false
-                        }
-                    },
-                    scales: {
-                        x: {
-                            grid: {
-                                display: false
-                            }
-                        },
-                        y: {
-                            position: 'right',
-                            grid: {
-                                color: 'rgba(0, 0, 0, 0.05)'
-                            }
-                        }
-                    }
-                }
-            });
-            
-            // Volume chart
-            const volumeCtx = document.getElementById('volumeChart').getContext('2d');
-            const volumeData = generateVolumeData(100);
-            
-            const volumeChart = new Chart(volumeCtx, {
-                type: 'bar',
-                data: {
-                    labels: timeLabels,
-                    datasets: [{
-                        label: 'Volume',
-                        data: volumeData,
-                        backgroundColor: 'rgba(41, 98, 255, 0.7)',
-                        borderWidth: 0
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    },
-                    scales: {
-                        x: {
-                            grid: {
-                                display: false
-                            },
-                            ticks: {
-                                maxTicksLimit: 6
-                            }
-                        },
-                        y: {
-                            grid: {
-                                color: 'rgba(0, 0, 0, 0.05)'
-                            },
-                            ticks: {
-                                callback: function(value) {
-                                    if (value >= 1000000) {
-                                        return (value / 1000000).toFixed(1) + 'M';
-                                    }
-                                    return value;
+                            intersect: false,
+                            callbacks: {
+                                label: function(context) {
+                                    return `Price: ₹${context.parsed.y.toFixed(2)}`;
                                 }
                             }
                         }
-                    }
-                }
-            });
-            
-            // Comparison chart
-            const comparisonCtx = document.getElementById('comparisonChart').getContext('2d');
-            const aaplData = generateStockData(175, 50, 0.5);
-            const msftData = generateStockData(337, 50, 0.5);
-            const googlData = generateStockData(138, 50, 0.5);
-            const comparisonLabels = generateTimeLabels(50, 120000); // 2 minute intervals
-            
-            const comparisonChart = new Chart(comparisonCtx, {
-                type: 'line',
-                data: {
-                    labels: comparisonLabels,
-                    datasets: [
-                        {
-                            label: 'AAPL',
-                            data: aaplData,
-                            borderColor: '#2962ff',
-                            backgroundColor: 'transparent',
-                            borderWidth: 2,
-                            tension: 0.4
-                        },
-                        {
-                            label: 'MSFT',
-                            data: msftData,
-                            borderColor: '#00c853',
-                            backgroundColor: 'transparent',
-                            borderWidth: 2,
-                            tension: 0.4
-                        },
-                        {
-                            label: 'GOOGL',
-                            data: googlData,
-                            borderColor: '#ff1744',
-                            backgroundColor: 'transparent',
-                            borderWidth: 2,
-                            tension: 0.4
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'top'
-                        }
                     },
                     scales: {
                         x: {
                             grid: {
-                                display: false
+                                display: false,
+                                color: 'rgba(255, 255, 255, 0.1)'
                             },
                             ticks: {
-                                maxTicksLimit: 6
+                                color: 'rgba(255, 255, 255, 0.7)',
+                                maxTicksLimit: 8
                             }
                         },
                         y: {
                             position: 'right',
                             grid: {
-                                color: 'rgba(0, 0, 0, 0.05)'
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: 'rgba(255, 255, 255, 0.7)',
+                                callback: function(value) {
+                                    return '₹' + value.toLocaleString();
+                                }
                             }
                         }
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
                     }
                 }
             });
             
-            // Time period buttons
-            document.getElementById('time-1d').addEventListener('click', function() {
-                alert('Switching to 1 day view - would connect to real data source');
+            // Update price display and metrics
+            const currentPrice = priceData[priceData.length - 1];
+            updatePriceDisplay(currentPrice);
+            updatePerformanceMetrics(priceData);
+        }
+        
+        // Update chart with new data point
+        function updateChart() {
+            if (!mainChart) return;
+            
+            const data = mainChart.data.datasets[0].data;
+            const lastPrice = data[data.length - 1];
+            
+            // Generate new price with realistic movement
+            const changePercent = (Math.random() - 0.45) * 0.2;
+            const newPrice = lastPrice * (1 + changePercent / 100);
+            
+            // Add new data point and remove the first one
+            data.push(newPrice);
+            data.shift();
+            
+            // Update labels for 1D view (shift time forward)
+            if (Object.keys(timeButtons).find(key => timeButtons[key].classList.contains('active')) === '1d') {
+                const labels = mainChart.data.labels;
+                const now = new Date();
+                
+                // Remove first label and add new one
+                labels.shift();
+                
+                // For 1D view, increment time by 5 minutes
+                const lastTime = new Date();
+                lastTime.setHours(parseInt(labels[labels.length - 1].split(':')[0]), 
+                                 parseInt(labels[labels.length - 1].split(':')[1]));
+                
+                const newTime = new Date(lastTime.getTime() + 5 * 60 * 1000);
+                labels.push(newTime.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'}));
+            }
+            
+            // Update the chart
+            mainChart.update('none');
+            
+            // Update price display and metrics
+            updatePriceDisplay(newPrice);
+            updatePerformanceMetrics(data);
+        }
+        
+        // Set active time period
+        function setActivePeriod(period) {
+            // Remove active class from all buttons
+            Object.values(timeButtons).forEach(button => {
+                button.classList.remove('active');
             });
             
-            document.getElementById('time-1w').addEventListener('click', function() {
-                alert('Switching to 1 week view - would connect to real data source');
-            });
+            // Add active class to clicked button
+            timeButtons[period].classList.add('active');
             
-            document.getElementById('time-1m').addEventListener('click', function() {
-                alert('Switching to 1 month view - would connect to real data source');
+            // Reinitialize chart with new period
+            initializeChart(period);
+        }
+        
+        // Event listeners for time period buttons
+        Object.keys(timeButtons).forEach(period => {
+            timeButtons[period].addEventListener('click', () => {
+                setActivePeriod(period);
             });
+        });
+        
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize with 1D view
+            initializeChart('1d');
             
-            document.getElementById('time-3m').addEventListener('click', function() {
-                alert('Switching to 3 month view - would connect to real data source');
-            });
+            // Update chart every 5 seconds to simulate real-time data
+            setInterval(updateChart, 5000);
             
-            // Update data every 5 seconds to simulate real-time updates
-            setInterval(function() {
-                // Update main chart
-                const newPrice = mainChart.data.datasets[0].data[mainChart.data.datasets[0].data.length - 1];
-                const changePercent = (Math.random() - 0.5) * 0.2;
-                const updatedPrice = newPrice * (1 + changePercent / 100);
-                
-                // Remove first data point and add new one
-                mainChart.data.labels.push(generateTimeLabels(1, 60000)[0]);
-                mainChart.data.labels.shift();
-                mainChart.data.datasets[0].data.push(updatedPrice);
-                mainChart.data.datasets[0].data.shift();
-                
-                mainChart.update('none');
-                
-                // Update volume chart
-                volumeChart.data.labels.push(generateTimeLabels(1, 60000)[0]);
-                volumeChart.data.labels.shift();
-                volumeChart.data.datasets[0].data.push(generateVolumeData(1)[0]);
-                volumeChart.data.datasets[0].data.shift();
-                
-                volumeChart.update('none');
-                
-                // Update comparison chart
-                comparisonChart.data.labels.push(generateTimeLabels(1, 120000)[0]);
-                comparisonChart.data.labels.shift();
-                
-                comparisonChart.data.datasets[0].data.push(
-                    comparisonChart.data.datasets[0].data[comparisonChart.data.datasets[0].data.length - 1] * (1 + (Math.random() - 0.5) * 0.2 / 100)
-                );
-                comparisonChart.data.datasets[0].data.shift();
-                
-                comparisonChart.data.datasets[1].data.push(
-                    comparisonChart.data.datasets[1].data[comparisonChart.data.datasets[1].data.length - 1] * (1 + (Math.random() - 0.5) * 0.2 / 100)
-                );
-                comparisonChart.data.datasets[1].data.shift();
-                
-                comparisonChart.data.datasets[2].data.push(
-                    comparisonChart.data.datasets[2].data[comparisonChart.data.datasets[2].data.length - 1] * (1 + (Math.random() - 0.5) * 0.2 / 100)
-                );
-                comparisonChart.data.datasets[2].data.shift();
-                
-                comparisonChart.update('none');
-                
-                // Update stock cards
-                updateStockCards();
-            }, 5000);
+            // Simulate initial API delay
+            setTimeout(() => {
+                chartLoadingEl.style.display = 'none';
+                mainChartCanvas.style.display = 'block';
+            }, 1500);
         });
     </script>
 </body>
