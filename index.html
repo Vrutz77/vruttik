@@ -103,13 +103,48 @@
         }
       }
       /* Headings (H1–H6) */
-      h1,
+      @font-face {
+        font-family: "Ragam Luxury";
+        src: url("vruttik/Ragam.ttf") format("truetype");
+        font-weight: normal;
+        font-style: normal;
+      }
+      @font-face {
+        font-family: "Stanbriged";
+        src: url("vruttik/Stanbriged.ttf") format("truetype");
+        font-weight: normal;
+        font-style: normal;
+      }
+      @font-face {
+        font-family: "Gollie";
+        src: url("vruttik/Gollie.ttf") format("truetype");
+        font-weight: normal;
+        font-style: normal; 
+      }
+      @font-face {
+        font-family: "aquire";
+        src: url("vruttik/Aquire.otf") format("truetype");
+        font-weight: normal;
+        font-style: normal; 
+      }
+      /* h1,
       h2,
       h3,
       h4,
       h5,
       h6 {
-        font-family: "Josefin Sans", sans-serif;
+        font-family: "Stanbriged", "Ragam Luxury", "Josefin Sans", sans-serif ;
+      } */
+      h1,
+      h2
+      {
+        font-family: "aquire", "Josefin Sans", sans-serif ;
+      }
+      h3,
+      h4,
+      h5,
+      h6 {
+        font-family: "Josefin Sans", sans-serif ;
       }
 
       /* Body text */
@@ -413,7 +448,6 @@
 
         <!-- Experience Start -->
 
-        
         <!-- Contact Start -->
         <div class="contact" id="contact">
           <div class="content-inner">
@@ -669,7 +703,6 @@
           >
             <i class="fab fa-whatsapp"></i>
           </a>
-
           <!-- <a
             href="https://wa.me/916353550722"
             target="_blank"
@@ -698,5 +731,3 @@
     <script src="js/main.js"></script>
   </body>
 </html>
-
-
