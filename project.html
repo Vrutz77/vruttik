@@ -1,899 +1,912 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nippon Gold ETF - Real-time Chart</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <head>
+    <meta charset="utf-8" />
+    <!-- HTML Head SEO Tags -->
+    <title>
+      Vruttik Tailor | Full Stack Web Developer, Front End Developer, WordPress
+      Developer in Vapi, Sanjan, Umbergaon, Daman, Silvassa
+    </title>
+
+    <meta
+      name="description"
+      content="Vruttik Tailor – Professional Full Stack Web Developer, Front End Developer, and WordPress Developer offering responsive, user-friendly websites in Vapi, Sanjan, Umbergaon, Daman, and Silvassa. Hire for web design, development, and custom WordPress/Shopify solutions."
+    />
+
+    <meta
+      name="keywords"
+      content="Vruttik Tailor, Full Stack Web Developer Vapi, Front End Developer Vapi, WordPress Developer Vapi, Web Developer Sanjan, Web Designer Umbergaon, WordPress Expert Daman, Shopify Developer Silvassa, Responsive Web Developer Vapi"
+    />
+
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- Favicon -->
+    <link rel="icon" href="favicon.ico" type="image/x-icon" />
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,100..900;1,100..900&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Josefin+Sans:ital,wght@0,100..700;1,100..700&family=Quicksand:wght@300..700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Open+Sans:300;400;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- CSS Libraries -->
+    <link
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.10.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <link href="lib/slick/slick.css" rel="stylesheet" />
+    <link href="lib/slick/slick-theme.css" rel="stylesheet" />
+    <link href="lib/lightbox/css/lightbox.min.css" rel="stylesheet" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
+      integrity="sha512..."
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+
+    <!-- Template Stylesheet -->
+    <link href="css/style.css" rel="stylesheet" />
     <style>
-        :root {
-            --primary-color: #ffd700;
-            --secondary-color: #b8860b;
-            --background-color: #1a1a1a;
-            --card-color: #2d2d2d;
-            --text-color: #f5f5f5;
-            --positive-color: #00c853;
-            --negative-color: #ff1744;
+      .btn {
+        border-radius: 0;
+        color: #fff;
+        background: #016d94;
+        transition: all 0.3s;
+      }
+      .btn:hover {
+        background: #000;
+        color: #fff;
+      }
+      @media (max-width: 768px) {
+        .portfolio-row {
+          flex-direction: column;
         }
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        .portfolio-item {
+          width: 100% !important;
         }
-        
-        body {
-            background-color: var(--background-color);
-            color: var(--text-color);
-            padding: 20px;
-            line-height: 1.6;
+      }
+      @media (max-width: 768px) {
+        .mobile-split-title {
+          font-size: 20px;
+          text-align: left; /* optional */
+          line-height: 1.4;
         }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
+
+        .mobile-split-title span {
+          display: block; /* forces next line only on mobile */
+          font-size: 16px;
         }
-        
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid #444;
-            flex-wrap: wrap;
-            gap: 20px;
+        .navbar-dark .navbar-brand {
+          color: #016d94 !important;
+          font-weight: bold;
         }
-        
-        h1 {
-            color: var(--primary-color);
-            font-size: 28px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
+        .back-to-top i {
+          color: #016d94;
         }
-        
-        .logo {
-            font-size: 32px;
-        }
-        
-        .stock-info {
-            display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
-        }
-        
-        .stock-card {
-            background-color: var(--card-color);
-            border-radius: 10px;
-            padding: 15px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-            min-width: 150px;
-            text-align: center;
-            border-left: 4px solid var(--primary-color);
-        }
-        
-        .stock-symbol {
-            font-size: 18px;
-            font-weight: bold;
-            margin-bottom: 5px;
-            color: var(--primary-color);
-        }
-        
-        .stock-price {
-            font-size: 22px;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-        
-        .stock-change {
-            font-size: 14px;
-        }
-        
-        .positive {
-            color: var(--positive-color);
-        }
-        
-        .negative {
-            color: var(--negative-color);
-        }
-        
-        .chart-container {
-            background-color: var(--card-color);
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 30px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-            position: relative;
-        }
-        
-        .chart-wrapper {
-            height: 400px;
-            position: relative;
-        }
-        
-        .chart-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-            gap: 15px;
-        }
-        
-        .chart-title {
-            font-size: 20px;
-            font-weight: bold;
-            color: var(--primary-color);
-        }
-        
-        .chart-controls {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-        
-        button {
-            background-color: var(--primary-color);
-            color: #000;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-weight: 600;
-        }
-        
-        button:hover {
-            background-color: var(--secondary-color);
-            transform: translateY(-2px);
-        }
-        
-        button.active {
-            background-color: var(--secondary-color);
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-        }
-        
-        button:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-        
-        .charts-grid {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 30px;
-        }
-        
-        .info-panel {
-            background-color: var(--card-color);
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-        }
-        
-        .info-title {
-            font-size: 18px;
-            font-weight: bold;
-            margin-bottom: 15px;
-            color: var(--primary-color);
-            border-bottom: 1px solid #444;
-            padding-bottom: 10px;
-        }
-        
-        .info-item {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 10px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #333;
-        }
-        
-        .info-label {
-            color: #aaa;
-        }
-        
-        .info-value {
-            font-weight: 600;
-        }
-        
-        .loading {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 300px;
-            font-size: 18px;
-            color: var(--primary-color);
-            flex-direction: column;
-            gap: 15px;
-        }
-        
-        .spinner {
-            border: 4px solid rgba(255, 215, 0, 0.3);
-            border-radius: 50%;
-            border-top: 4px solid var(--primary-color);
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        .status-indicator {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            font-size: 14px;
-            margin-top: 10px;
-        }
-        
-        .status-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background-color: var(--positive-color);
-            animation: pulse 2s infinite;
-        }
-        
-        .status-dot.closed {
-            background-color: #ff6b6b;
-            animation: none;
-        }
-        
-        .error-message {
-            background-color: var(--negative-color);
-            color: white;
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 15px;
-            text-align: center;
-        }
-        
-        .success-message {
-            background-color: var(--positive-color);
-            color: white;
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 15px;
-            text-align: center;
-        }
-        
-        .market-status {
-            background-color: #2d2d2d;
-            padding: 8px 15px;
-            border-radius: 20px;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .market-status.open {
-            color: var(--positive-color);
-            border: 1px solid var(--positive-color);
-        }
-        
-        .market-status.closed {
-            color: #ff6b6b;
-            border: 1px solid #ff6b6b;
-        }
-        
-        .market-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-        }
-        
-        .market-dot.open {
-            background-color: var(--positive-color);
-        }
-        
-        .market-dot.closed {
-            background-color: #ff6b6b;
-        }
-        
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.5; }
-            100% { opacity: 1; }
-        }
-        
-        @media (max-width: 768px) {
-            .charts-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            header {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-            
-            .stock-info {
-                width: 100%;
-                justify-content: space-between;
-            }
-            
-            .chart-header {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-            
-            .chart-controls {
-                width: 100%;
-                justify-content: space-between;
-            }
-            
-            .chart-wrapper {
-                height: 300px;
-            }
-        }
+      }
+      /* Headings (H1–H6) */
+      @font-face {
+        font-family: "Ragam Luxury";
+        src: url("vruttik/Ragam.ttf") format("truetype");
+        font-weight: normal;
+        font-style: normal;
+      }
+      @font-face {
+        font-family: "Stanbriged";
+        src: url("vruttik/Stanbriged.ttf") format("truetype");
+        font-weight: normal;
+        font-style: normal;
+      }
+      @font-face {
+        font-family: "Gollie";
+        src: url("vruttik/Gollie.ttf") format("truetype");
+        font-weight: normal;
+        font-style: normal; 
+      }
+      @font-face {
+        font-family: "aquire";
+        src: url("vruttik/Aquire.otf") format("truetype");
+        font-weight: normal;
+        font-style: normal; 
+      }
+      /* h1,
+      h2,
+      h3,
+      h4,
+      h5,
+      h6 {
+        font-family: "Stanbriged", "Ragam Luxury", "Josefin Sans", sans-serif ;
+      } */
+      h1,
+      h2
+      {
+        font-family: "aquire", "Josefin Sans", sans-serif ;
+      }
+      h3,
+      h4,
+      h5,
+      h6 {
+        font-family: "Josefin Sans", sans-serif ;
+      }
+
+      /* Body text */
+      body {
+        font-family: "Quicksand", sans-serif !important;
+      }
+      .navbar-dark .navbar-toggler-icon {
+        background-image: url("data:image/svg+xml;charset=utf8,%3Csvg viewBox='0 0 30 30' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath stroke='%23016d94' stroke-width='2' stroke-linecap='round' stroke-miterlimit='10' d='M4 7h22M4 15h22M4 23h22'/%3E%3C/svg%3E");
+      }
     </style>
-</head>
-<body>
-    <div class="container">
-        <header>
-            <h1><span class="logo">💰</span> Nippon Gold ETF Tracker</h1>
-            <div class="stock-info">
-                <div class="stock-card">
-                    <div class="stock-symbol">GOLDBEES</div>
-                    <div class="stock-price" id="current-price">₹5,625.40</div>
-                    <div class="stock-change positive" id="price-change">+0.42%</div>
-                </div>
-                <div class="stock-card">
-                    <div class="stock-symbol">NAV</div>
-                    <div class="stock-price" id="nav-price">₹5,623.85</div>
-                    <div class="stock-change positive" id="nav-change">+0.41%</div>
-                </div>
-                <div class="market-status closed" id="market-status">
-                    <div class="market-dot closed"></div>
-                    <span>Market Closed</span>
-                </div>
-            </div>
-        </header>
-        
-        <div id="message-container">
-            <div class="success-message">
-                Using realistic simulated data for Nippon Gold ETF. Live updates will resume when market opens.
-            </div>
+  </head>
+
+  <body data-spy="scroll" data-target=".navbar" data-offset="51">
+    <div class="wrapper">
+      <div class="sidebar">
+        <div class="sidebar-header">
+          <img src="img/vruttik.png" alt="Image" />
         </div>
-        
-        <div class="chart-container">
-            <div class="chart-header">
-                <div class="chart-title">Nippon India Gold Bees ETF (GOLDBEES)</div>
-                <div class="chart-controls">
-                    <button id="time-1d" class="active">1D</button>
-                    <button id="time-1w">1W</button>
-                    <button id="time-1m">1M</button>
-                    <button id="time-3m">3M</button>
-                    <button id="time-1y">1Y</button>
-                </div>
+        <div class="sidebar-content">
+          <nav class="navbar navbar-expand-md bg-dark navbar-dark">
+            <a href="#" class="navbar-brand">Vruttik's Resume</a>
+            <button
+              type="button"
+              class="navbar-toggler"
+              data-toggle="collapse"
+              data-target="#navbarCollapse"
+            >
+              <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarCollapse">
+              <ul class="nav navbar-nav">
+                <li class="nav-item">
+                  <a class="nav-link" href="#header"
+                    >Home<i class="fa fa-home"></i
+                  ></a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="#about"
+                    >About<i class="fa fa-address-card"></i
+                  ></a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="#experience"
+                    >Experience<i class="fa fa-star"></i
+                  ></a>
+                </li>
+                <!-- <li class="nav-item">
+                  <a class="nav-link" href="#service"
+                    >Service<i class="fa fa-tasks"></i
+                  ></a>
+                </li> -->
+                <li class="nav-item">
+                  <a class="nav-link" href="#portfolio"
+                    >Portfolio<i class="fa fa-file-archive"></i
+                  ></a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="#contact"
+                    >Contact<i class="fa fa-envelope"></i
+                  ></a>
+                </li>
+              </ul>
             </div>
-            <div class="chart-wrapper">
-                <div class="loading" id="chart-loading">
-                    <div class="spinner"></div>
-                    <div>Loading chart data...</div>
-                </div>
-                <canvas id="mainChart" style="display: none; width: 100% !important; height: 100% !important;"></canvas>
-            </div>
-            <div class="status-indicator">
-                <div class="status-dot closed" id="status-dot"></div>
-                <span id="status-text">Market Closed - Data from last trading session</span>
-            </div>
+          </nav>
         </div>
-        
-        <div class="charts-grid">
-            <div class="info-panel">
-                <div class="info-title">ETF Information</div>
-                <div class="info-item">
-                    <span class="info-label">Fund Name:</span>
-                    <span class="info-value">Nippon India Gold Bees ETF</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">Ticker Symbol:</span>
-                    <span class="info-value">GOLDBEES.NS</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">Expense Ratio:</span>
-                    <span class="info-value">0.49%</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">AUM:</span>
-                    <span class="info-value">₹5,280 Cr</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">Underlying Asset:</span>
-                    <span class="info-value">Physical Gold</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">Gold Purity:</span>
-                    <span class="info-value">99.5%</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">Inception Date:</span>
-                    <span class="info-value">March 2007</span>
-                </div>
+
+        <!-- <div class="sidebar-footer">
+          <a href="#"><i class="fab fa-twitter"></i></a>
+          <a href="#"><i class="fab fa-facebook-f"></i></a>
+          <a href="#"><i class="fab fa-linkedin-in"></i></a>
+        </div> -->
+      </div>
+      <div class="content">
+        <!-- Header Start -->
+        <div class="header" id="header">
+          <div class="content-inner">
+            <p>I'm</p>
+            <h1>
+              Vruttik <br />Harshadbhai <br />
+              Tailor
+            </h1>
+            <h2></h2>
+            <div class="typed-text">
+              Full Stack Web Developer, Front End Developer, WordPress Developer
             </div>
-            
-            <div class="info-panel">
-                <div class="info-title">Performance Metrics</div>
-                <div class="info-item">
-                    <span class="info-label">Today's High:</span>
-                    <span class="info-value" id="today-high">₹5,635.20</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">Today's Low:</span>
-                    <span class="info-value" id="today-low">₹5,610.75</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">52W High:</span>
-                    <span class="info-value" id="year-high">₹5,845.50</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">52W Low:</span>
-                    <span class="info-value" id="year-low">₹4,890.75</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">Volume:</span>
-                    <span class="info-value" id="volume">2.85L</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">Last Traded:</span>
-                    <span class="info-value" id="last-updated">15:30 IST</span>
-                </div>
-            </div>
+          </div>
         </div>
+        <!-- Header End -->
+
+        <!-- Large Button Start -->
+        <!-- <div class="large-btn">
+          <div class="content-inner">
+            <a class="btn" href="#"><i class="fa fa-download"></i>Resume</a>
+            <a class="btn" href="https://wa.me/916353550722" target="_blank">
+              <i class="fab fa-whatsapp"></i> Let’s Connect
+            </a>
+          </div>
+        </div> -->
+        <!-- Large Button End -->
+
+
+
+                <!-- Portfolio Start -->
+        <div class="portfolio" id="portfolio">
+          <div class="content-inner">
+            <div class="content-header">
+              <h2>Portfolio</h2>
+            </div>
+            <p>
+              All works showcased here were developed during my time at
+              <b>Enlightened Digital Marketing</b>. These are
+              <b>not personal projects</b>, but professional work completed
+              under the company's banner. As a <b>web developer</b>, I
+              contributed to a variety of projects including
+              <b>custom website development</b>, <b>theme customization</b>, and
+              <b>performance optimization</b>. I primarily worked with
+              <b>WordPress</b>, and also contributed to <b>Shopify</b>-based
+              solutions. To enhance <b>efficiency</b> and <b>productivity</b>, I
+              leveraged <b>AI tools</b> for <b>debugging</b>,
+              <b>code generation</b>, and
+              <b>streamlining development workflows</b>. My strong
+              <b>problem-solving skills</b> helped deliver <b>high-quality</b>,
+              <b>responsive websites</b> tailored to client needs.
+            </p>
+            <div class="content-header">
+              <h2 class="mobile-fix-title" style="font-size: 25px">
+                Static Website<span>(HTML, CSS, JS, PHP)</span>
+              </h2>
+            </div>
+            <div
+              class="portfolio-row"
+              style="display: flex; gap: 20px; justify-content: center"
+            >
+              <!-- First Image Block -->
+              <div
+                class="portfolio-item"
+                style="width: 50%; text-align: center"
+              >
+                <div
+                  style="
+                    height: 200px;
+                    overflow-y: auto;
+                    border: 1px solid #ccc;
+                  "
+                >
+                  <img
+                    src="img/portfolio/ssnaz.png"
+                    alt="Screenshot of SS Naz Salon Website"
+                    style="width: 100%; height: auto; display: block"
+                  />
+                </div>
+                <a
+                  class="btn"
+                  href="https://ssnazsalon.com/"
+                  target="_blank"
+                  style="display: inline-block; margin-top: 10px"
+                >
+                  Check Full Website
+                </a>
+              </div>
+
+              <!-- Second Image Block -->
+              <div
+                class="portfolio-item"
+                style="width: 50%; text-align: center"
+              >
+                <div
+                  style="
+                    height: 200px;
+                    overflow-y: auto;
+                    border: 1px solid #ccc;
+                  "
+                >
+                  <img
+                    src="img/portfolio/msdeveloper.png"
+                    alt="MSDeveloper Website"
+                    style="width: 100%; height: auto; display: block"
+                  />
+                </div>
+                <a
+                  class="btn"
+                  href="https://msdevelopersvapi.com/"
+                  target="_blank"
+                  style="display: inline-block; margin-top: 10px"
+                >
+                  Check Full Website
+                </a>
+              </div>
+            </div>
+            <div
+              class="portfolio-row"
+              style="
+                display: flex;
+                gap: 20px;
+                justify-content: center;
+                padding-top: 20px;
+              "
+            >
+              <!-- 3rd Image Block -->
+              <div
+                class="portfolio-item"
+                style="width: 50%; text-align: center"
+              >
+                <div
+                  style="
+                    height: 200px;
+                    overflow-y: auto;
+                    border: 1px solid #ccc;
+                  "
+                >
+                  <img
+                    src="img/portfolio/skengineeringworks.png"
+                    alt="MSDeveloper Website"
+                    style="width: 100%; height: auto; display: block"
+                  />
+                </div>
+                <a
+                  class="btn"
+                  href="https://skengineeringworks.net/"
+                  target="_blank"
+                  style="display: inline-block; margin-top: 10px"
+                >
+                  Check Full Website
+                </a>
+              </div>
+              <!-- 4th Image Block -->
+              <div
+                class="portfolio-item"
+                style="width: 50%; text-align: center"
+              >
+                <div
+                  style="
+                    height: 200px;
+                    overflow-y: auto;
+                    border: 1px solid #ccc;
+                  "
+                >
+                  <img
+                    src="img/portfolio/sfx-ducts.png"
+                    alt="MSDeveloper Website"
+                    style="width: 100%; height: auto; display: block"
+                  />
+                </div>
+                <a
+                  class="btn"
+                  href="https://sfx-ducts.com/"
+                  target="_blank"
+                  style="display: inline-block; margin-top: 10px"
+                >
+                  Check Full Website
+                </a>
+              </div>
+            </div>
+            <div
+              class="portfolio-row"
+              style="
+                display: flex;
+                gap: 20px;
+                justify-content: center;
+                padding-top: 20px;
+                padding-bottom: 30px;
+              "
+            >
+              <!-- 5th Image Block -->
+              <div
+                class="portfolio-item"
+                style="width: 50%; text-align: center"
+              >
+                <div
+                  style="
+                    height: 200px;
+                    overflow-y: auto;
+                    border: 1px solid #ccc;
+                  "
+                >
+                  <img
+                    src="img/portfolio/hindco.png"
+                    alt="MSDeveloper Website"
+                    style="width: 100%; height: auto; display: block"
+                  />
+                </div>
+                <a
+                  class="btn"
+                  href="https://enlighteneddigital.in/hindcobros2/"
+                  target="_blank"
+                  style="display: inline-block; margin-top: 10px"
+                >
+                  Check Full Website
+                </a>
+              </div>
+              <!-- 6th Image Block -->
+              <div
+                class="portfolio-item"
+                style="width: 50%; text-align: center"
+              >
+                <div
+                  style="
+                    height: 200px;
+                    overflow-y: auto;
+                    border: 1px solid #ccc;
+                  "
+                >
+                  <p>It's React Website</p>
+                  <img
+                    src="img/portfolio/mahavirexim.png"
+                    alt="MSDeveloper Website"
+                    style="width: 100%; height: auto; display: block"
+                  />
+                </div>
+
+                <a
+                  class="btn"
+                  href="https://mahavirexim.com/"
+                  target="_blank"
+                  style="display: inline-block; margin-top: 10px"
+                >
+                  Check Full Website
+                </a>
+              </div>
+            </div>
+            <div class="content-header" style="margin-bottom: 10px">
+              <h2 style="font-size: 25px">WordPress Website</h2>
+            </div>
+            <div
+              class="portfolio-row"
+              style="
+                display: flex;
+                gap: 20px;
+                justify-content: center;
+                padding-top: 20px;
+              "
+            >
+              <!-- 7th Image Block -->
+              <div
+                class="portfolio-item"
+                style="width: 50%; text-align: center"
+              >
+                <div
+                  style="
+                    height: 200px;
+                    overflow-y: auto;
+                    border: 1px solid #ccc;
+                  "
+                >
+                  <img
+                    src="img/portfolio/exoticflowers.png"
+                    alt="MSDeveloper Website"
+                    style="width: 100%; height: auto; display: block"
+                  />
+                </div>
+                <a
+                  class="btn"
+                  href="https://exoticflowers.in/"
+                  target="_blank"
+                  style="display: inline-block; margin-top: 10px"
+                >
+                  Check Full Website
+                </a>
+              </div>
+              <!-- 7th Image Block -->
+              <div
+                class="portfolio-item"
+                style="width: 50%; text-align: center"
+              >
+                <div
+                  style="
+                    height: 200px;
+                    overflow-y: auto;
+                    border: 1px solid #ccc;
+                  "
+                >
+                  <img
+                    src="img/portfolio/indiangeetnotation.png"
+                    alt="MSDeveloper Website"
+                    style="width: 100%; height: auto; display: block"
+                  />
+                </div>
+                <a
+                  class="btn"
+                  href="https://ghostwhite-viper-889663.hostingersite.com/"
+                  target="_blank"
+                  style="display: inline-block; margin-top: 10px"
+                >
+                  Check Full Website
+                </a>
+              </div>
+            </div>
+
+            <!-- <div class="row">
+              <div class="col-lg-12">
+                <ul id="portfolio-flters">
+                  <li data-filter="*" class="filter-active">All</li>
+                  <li data-filter=".web-des">Design</li>
+                  <li data-filter=".web-dev">Development</li>
+                  <li data-filter=".dig-mar">Marketing</li>
+                </ul>
+              </div>
+            </div>
+            <div class="row portfolio-container">
+              <div class="col-lg-4 col-md-6 portfolio-item web-des">
+                <div class="portfolio-wrap">
+                  <figure>
+                    <img src="img/portfolio-1.jpg" class="img-fluid" alt="" />
+                    <a
+                      href="img/portfolio-1.jpg"
+                      data-lightbox="portfolio"
+                      data-title="Project Name"
+                      class="link-preview"
+                      title="Preview"
+                      ><i class="fa fa-eye"></i
+                    ></a>
+                    <a href="#" class="link-details" title="More Details"
+                      ><i class="fa fa-link"></i
+                    ></a>
+                    <a class="portfolio-title" href="#"
+                      >Project Name <span>Web Design</span></a
+                    >
+                  </figure>
+                </div>
+              </div>
+
+              <div class="col-lg-4 col-md-6 portfolio-item web-des">
+                <div class="portfolio-wrap">
+                  <figure>
+                    <img src="img/portfolio-2.jpg" class="img-fluid" alt="" />
+                    <a
+                      href="img/portfolio-2.jpg"
+                      class="link-preview"
+                      data-lightbox="portfolio"
+                      data-title="Project Name"
+                      title="Preview"
+                      ><i class="fa fa-eye"></i
+                    ></a>
+                    <a href="#" class="link-details" title="More Details"
+                      ><i class="fa fa-link"></i
+                    ></a>
+                    <a class="portfolio-title" href="#"
+                      >Project Name <span>Web Design</span></a
+                    >
+                  </figure>
+                </div>
+              </div>
+
+              <div class="col-lg-4 col-md-6 portfolio-item web-dev">
+                <div class="portfolio-wrap">
+                  <figure>
+                    <img src="img/portfolio-3.jpg" class="img-fluid" alt="" />
+                    <a
+                      href="img/portfolio-3.jpg"
+                      class="link-preview"
+                      data-lightbox="portfolio"
+                      data-title="Project Name"
+                      title="Preview"
+                      ><i class="fa fa-eye"></i
+                    ></a>
+                    <a href="#" class="link-details" title="More Details"
+                      ><i class="fa fa-link"></i
+                    ></a>
+                    <a class="portfolio-title" href="#"
+                      >Project Name <span>Web Development</span></a
+                    >
+                  </figure>
+                </div>
+              </div>
+
+              <div class="col-lg-4 col-md-6 portfolio-item web-dev">
+                <div class="portfolio-wrap">
+                  <figure>
+                    <img src="img/portfolio-4.jpg" class="img-fluid" alt="" />
+                    <a
+                      href="img/portfolio-4.jpg"
+                      class="link-preview"
+                      data-lightbox="portfolio"
+                      data-title="Project Name"
+                      title="Preview"
+                      ><i class="fa fa-eye"></i
+                    ></a>
+                    <a href="#" class="link-details" title="More Details"
+                      ><i class="fa fa-link"></i
+                    ></a>
+                    <a class="portfolio-title" href="#"
+                      >Project Name <span>Web Development</span></a
+                    >
+                  </figure>
+                </div>
+              </div>
+
+              <div class="col-lg-4 col-md-6 portfolio-item dig-mar">
+                <div class="portfolio-wrap">
+                  <figure>
+                    <img src="img/portfolio-5.jpg" class="img-fluid" alt="" />
+                    <a
+                      href="img/portfolio-5.jpg"
+                      class="link-preview"
+                      data-lightbox="portfolio"
+                      data-title="Project Name"
+                      title="Preview"
+                      ><i class="fa fa-eye"></i
+                    ></a>
+                    <a href="#" class="link-details" title="More Details"
+                      ><i class="fa fa-link"></i
+                    ></a>
+                    <a class="portfolio-title" href="#"
+                      >Project Name <span>Digital Marketing</span></a
+                    >
+                  </figure>
+                </div>
+              </div>
+
+              <div class="col-lg-4 col-md-6 portfolio-item dig-mar">
+                <div class="portfolio-wrap">
+                  <figure>
+                    <img src="img/portfolio-6.jpg" class="img-fluid" alt="" />
+                    <a
+                      href="img/portfolio-6.jpg"
+                      class="link-preview"
+                      data-lightbox="portfolio"
+                      data-title="Project Name"
+                      title="Preview"
+                      ><i class="fa fa-eye"></i
+                    ></a>
+                    <a href="#" class="link-details" title="More Details"
+                      ><i class="fa fa-link"></i
+                    ></a>
+                    <a class="portfolio-title" href="#"
+                      >Project Name <span>Digital Marketing</span></a
+                    >
+                  </figure>
+                </div>
+              </div>
+            </div> -->
+          </div>
+        </div>
+        <!-- Portfolio Start -->
+                 <!-- Contact Start -->
+        <div class="contact" id="contact">
+          <div class="content-inner">
+            <div class="content-header">
+              <h2>Contact</h2>
+            </div>
+            <div class="row align-items-center">
+              <div class="col-md-6">
+                <div class="contact-info" style="padding-bottom: 50px">
+                  <p><i class="fa fa-user"></i>Vruttik H. Tailor</p>
+                  <p><i class="fa fa-tag"></i>Web Designer & Developer</p>
+                  <p>
+                    <i class="fa fa-envelope"></i
+                    ><a href="mailto:tailorvrutz@gmail.com"
+                      >tailorvrutz@gmail.com</a
+                    >
+                  </p>
+                  <p>
+                    <i class="fa fa-phone-alt"></i
+                    ><a href="tel:+916353550722">+91 635 355 0722</a>
+                  </p>
+                  <p>
+                    <i class="fa fa-map-marker"></i>1584/1,Near Siddhnath
+                    Temple, Sutharwad, Vapi-396191.
+                  </p>
+                  <!-- <div class="social">
+                    <a class="btn" href=""><i class="fab fa-twitter"></i></a>
+                    <a class="btn" href=""><i class="fab fa-facebook-f"></i></a>
+                    <a class="btn" href=""
+                      ><i class="fab fa-linkedin-in"></i
+                    ></a>
+                    <a class="btn" href=""><i class="fab fa-instagram"></i></a>
+                    <a class="btn" href=""><i class="fab fa-youtube"></i></a>
+                  </div> -->
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form">
+                  <form
+                    id="contactForm"
+                    action="https://formsubmit.co/tailorvrutz7117@gmail.com"
+                    method="POST"
+                  >
+                    <!-- FormSubmit Settings -->
+                    <input type="hidden" name="_captcha" value="false" />
+                    <input type="hidden" name="_template" value="table" />
+                    <input
+                      type="hidden"
+                      name="_subject"
+                      value="New Contact from Portfolio Website"
+                    />
+
+                    <div class="form-row">
+                      <div class="form-group col-md-6">
+                        <input
+                          type="text"
+                          name="name"
+                          class="form-control"
+                          placeholder="Your Name"
+                          required
+                        />
+                      </div>
+                      <div class="form-group col-md-6">
+                        <input
+                          type="email"
+                          name="email"
+                          class="form-control"
+                          placeholder="Your Email"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div class="form-group">
+                      <input
+                        type="text"
+                        name="subject"
+                        class="form-control"
+                        placeholder="Subject"
+                        required
+                      />
+                    </div>
+
+                    <div class="form-group">
+                      <textarea
+                        class="form-control"
+                        name="message"
+                        rows="5"
+                        placeholder="Message"
+                        required
+                      ></textarea>
+                    </div>
+
+                    <div>
+                      <button class="btn" type="submit">Send Message</button>
+                    </div>
+                  </form>
+
+                  <!-- Popup -->
+                  <div
+                    id="popupMessage"
+                    style="
+                      display: none;
+                      position: fixed;
+                      top: 50%;
+                      left: 50%;
+                      transform: translate(-50%, -50%);
+                      background: white;
+                      border-radius: 10px;
+                      padding: 20px 30px;
+                      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+                      text-align: center;
+                      z-index: 9999;
+                    "
+                  >
+                    <h4>✅ Message Sent Successfully!</h4>
+                    <p>I’ll get back to you soon.</p>
+                    <button
+                      onclick="document.getElementById('popupMessage').style.display='none'"
+                      style="
+                        background: #007bff;
+                        border: none;
+                        color: white;
+                        padding: 8px 15px;
+                        border-radius: 6px;
+                        cursor: pointer;
+                      "
+                    >
+                      OK
+                    </button>
+                  </div>
+
+                  <script>
+                    const form = document.getElementById("contactForm");
+                    form.addEventListener("submit", function (e) {
+                      e.preventDefault();
+
+                      const formData = new FormData(form);
+
+                      fetch(form.action, {
+                        method: "POST",
+                        body: formData,
+                      })
+                        .then((response) => {
+                          if (response.ok) {
+                            document.getElementById(
+                              "popupMessage"
+                            ).style.display = "block";
+                            form.reset();
+                          } else {
+                            alert("Something went wrong. Please try again.");
+                          }
+                        })
+                        .catch(() => {
+                          alert(
+                            "Error sending message. Please check your internet connection."
+                          );
+                        });
+                    });
+                  </script>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Contact End -->
+        
+
+        <!-- Education Start -->
+
+        <!-- Footer Start -->
+        <!-- <div class="footer">
+          <div class="content-inner">
+            <div class="row align-items-center">
+              <div class="col-md-6">
+                <p>
+                  &copy; <span id="year"></span> <b>Vruttik Tailor</b>. All
+                  Rights Reserved.
+                </p>
+              </div>
+              <div class="col-md-6">
+                <p>Powered by <b>Vruttik Tailor</b></p>
+              </div>
+            </div>
+          </div>
+        </div> -->
+
+        <!-- <script>
+          // Automatically insert current year
+          document.getElementById("year").textContent =
+            new Date().getFullYear();
+        </script> -->
+
+        <!-- Footer Start -->
+        <footer>
+          <a
+            href="https://wa.me/916353550722"
+            class="whatsapp-float"
+            target="_blank"
+            title="Chat on WhatsApp"
+          >
+            <i class="fab fa-whatsapp"></i>
+          </a>
+          <!-- <a
+            href="https://wa.me/916353550722"
+            target="_blank"
+            class="whatsapp-float"
+          >
+            <i class="fa fa-whatsapp"></i>
+          </a> -->
+        </footer>
+      </div>
     </div>
 
-    <script>
-        // Configuration - Using realistic Nippon Gold ETF data
-        const BASE_PRICE = 5625.40; // Realistic price for Gold Bees
-        const PREV_CLOSE = 5601.85; // Previous closing price
-        
-        // DOM Elements
-        const currentPriceEl = document.getElementById('current-price');
-        const priceChangeEl = document.getElementById('price-change');
-        const navPriceEl = document.getElementById('nav-price');
-        const navChangeEl = document.getElementById('nav-change');
-        const todayHighEl = document.getElementById('today-high');
-        const todayLowEl = document.getElementById('today-low');
-        const yearHighEl = document.getElementById('year-high');
-        const yearLowEl = document.getElementById('year-low');
-        const volumeEl = document.getElementById('volume');
-        const lastUpdatedEl = document.getElementById('last-updated');
-        const chartLoadingEl = document.getElementById('chart-loading');
-        const mainChartCanvas = document.getElementById('mainChart');
-        const messageContainer = document.getElementById('message-container');
-        const marketStatusEl = document.getElementById('market-status');
-        const statusDotEl = document.getElementById('status-dot');
-        const statusTextEl = document.getElementById('status-text');
-        
-        // Time period buttons
-        const timeButtons = {
-            '1d': document.getElementById('time-1d'),
-            '1w': document.getElementById('time-1w'),
-            '1m': document.getElementById('time-1m'),
-            '3m': document.getElementById('time-3m'),
-            '1y': document.getElementById('time-1y')
-        };
-        
-        // Chart instance
-        let mainChart;
-        let currentData = null;
-        let updateInterval;
-        let isMarketOpen = false;
+    <!-- Back to Top -->
+    <a href="#" class="back-to-top"><i class="fa fa-angle-double-up"></i></a>
 
-        // Check if market is open (Indian Stock Market: 9:15 AM - 3:30 PM IST, Mon-Fri)
-        function checkMarketStatus() {
-            const now = new Date();
-            const istOffset = 5.5 * 60 * 60 * 1000; // IST is UTC+5:30
-            const istTime = new Date(now.getTime() + istOffset);
-            
-            const day = istTime.getUTCDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
-            const hours = istTime.getUTCHours();
-            const minutes = istTime.getUTCMinutes();
-            
-            // Market hours: 9:15 AM to 3:30 PM IST, Monday to Friday
-            const isWeekday = day >= 1 && day <= 5;
-            const isMarketHours = (hours > 9 || (hours === 9 && minutes >= 15)) && 
-                                 (hours < 15 || (hours === 15 && minutes <= 30));
-            
-            return isWeekday && isMarketHours;
-        }
-        
-        // Update market status display
-        function updateMarketStatusDisplay() {
-            isMarketOpen = checkMarketStatus();
-            
-            if (isMarketOpen) {
-                marketStatusEl.className = 'market-status open';
-                marketStatusEl.innerHTML = '<div class="market-dot open"></div><span>Market Open</span>';
-                statusDotEl.className = 'status-dot';
-                statusTextEl.textContent = 'Live data - Market is open';
-                
-                // Start updates if market is open
-                if (!updateInterval) {
-                    startLiveUpdates();
-                }
-            } else {
-                marketStatusEl.className = 'market-status closed';
-                marketStatusEl.innerHTML = '<div class="market-dot closed"></div><span>Market Closed</span>';
-                statusDotEl.className = 'status-dot closed';
-                statusTextEl.textContent = 'Market Closed - Data from last trading session';
-                
-                // Stop updates if market is closed
-                if (updateInterval) {
-                    clearInterval(updateInterval);
-                    updateInterval = null;
-                }
-            }
-        }
-        
-        // Format number as Indian currency
-        function formatINR(amount) {
-            return '₹' + amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        }
-        
-        // Format large numbers
-        function formatVolume(volume) {
-            if (volume >= 10000000) {
-                return (volume / 10000000).toFixed(2) + ' Cr';
-            } else if (volume >= 100000) {
-                return (volume / 100000).toFixed(2) + ' L';
-            } else {
-                return volume.toLocaleString('en-IN');
-            }
-        }
-        
-        // Generate realistic price data for Gold ETF based on period
-        function generatePriceData(period) {
-            let dataPoints, volatility, initialPrice;
-            
-            switch(period) {
-                case '1d':
-                    dataPoints = 78; // 6.5 hours * 12 (5-min intervals)
-                    volatility = 0.08;
-                    initialPrice = BASE_PRICE;
-                    break;
-                case '1w':
-                    dataPoints = 7;
-                    volatility = 0.5;
-                    initialPrice = 5580.25;
-                    break;
-                case '1m':
-                    dataPoints = 30;
-                    volatility = 1.2;
-                    initialPrice = 5520.50;
-                    break;
-                case '3m':
-                    dataPoints = 13; // Approx 13 weeks
-                    volatility = 3.5;
-                    initialPrice = 5350.75;
-                    break;
-                case '1y':
-                    dataPoints = 12;
-                    volatility = 8.0;
-                    initialPrice = 5120.25;
-                    break;
-                default:
-                    dataPoints = 78;
-                    volatility = 0.08;
-                    initialPrice = BASE_PRICE;
-            }
-            
-            const data = [];
-            let price = initialPrice;
-            
-            // Gold tends to have slight upward bias long-term
-            const bias = period === '1y' ? 0.1 : 0.02;
-            
-            for (let i = 0; i < dataPoints; i++) {
-                // More realistic price movement for gold
-                const changePercent = (Math.random() - 0.5 + bias) * volatility;
-                price = price * (1 + changePercent / 100);
-                
-                // Ensure realistic price range for gold ETF
-                if (period === '1y') {
-                    price = Math.max(price, 4800);
-                    price = Math.min(price, 5900);
-                } else {
-                    price = Math.max(price, initialPrice * 0.95);
-                    price = Math.min(price, initialPrice * 1.05);
-                }
-                
-                data.push(price);
-            }
-            
-            // For 1D view, make sure we end at the current price
-            if (period === '1d') {
-                data[data.length - 1] = BASE_PRICE;
-            }
-            
-            return data;
-        }
-        
-        // Generate time labels based on period
-        function generateTimeLabels(dataPoints, period) {
-            const labels = [];
-            
-            if (period === '1d') {
-                // For 1 day, show market hours (9:15 AM to 3:30 PM)
-                for (let i = 0; i < dataPoints; i++) {
-                    const totalMinutes = 9 * 60 + 15 + i * 5; // Start at 9:15, 5-min intervals
-                    const hours = Math.floor(totalMinutes / 60);
-                    const minutes = totalMinutes % 60;
-                    labels.push(`${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`);
-                }
-            } else {
-                // For longer periods, show dates
-                const now = new Date();
-                const intervals = {
-                    '1w': 24 * 60 * 60 * 1000,
-                    '1m': 24 * 60 * 60 * 1000,
-                    '3m': 7 * 24 * 60 * 60 * 1000,
-                    '1y': 30 * 24 * 60 * 60 * 1000
-                };
-                
-                const interval = intervals[period] || 24 * 60 * 60 * 1000;
-                
-                for (let i = dataPoints - 1; i >= 0; i--) {
-                    const date = new Date(now.getTime() - i * interval);
-                    
-                    if (period === '1w' || period === '1m') {
-                        labels.push(date.toLocaleDateString([], {month: 'short', day: 'numeric'}));
-                    } else {
-                        labels.push(date.toLocaleDateString([], {month: 'short', year: 'numeric'}));
-                    }
-                }
-            }
-            
-            return labels;
-        }
-        
-        // Update price display
-        function updatePriceDisplay(currentPrice, previousClose) {
-            currentPriceEl.textContent = formatINR(currentPrice);
-            
-            const changeValue = currentPrice - previousClose;
-            const changePercent = (changeValue / previousClose) * 100;
-            const isPositive = changeValue >= 0;
-            
-            priceChangeEl.textContent = `${isPositive ? '+' : ''}${changeValue.toFixed(2)} (${isPositive ? '+' : ''}${changePercent.toFixed(2)}%)`;
-            priceChangeEl.className = `stock-change ${isPositive ? 'positive' : 'negative'}`;
-            
-            // Update NAV with slight variation
-            const navPrice = currentPrice * 0.9998; // NAV is typically very close to market price
-            navPriceEl.textContent = formatINR(navPrice);
-            
-            const navChange = navPrice - (previousClose * 0.9998);
-            const navChangePercent = (navChange / (previousClose * 0.9998)) * 100;
-            
-            navChangeEl.textContent = `${navChange >= 0 ? '+' : ''}${navChange.toFixed(2)} (${navChangePercent >= 0 ? '+' : ''}${navChangePercent.toFixed(2)}%)`;
-            navChangeEl.className = `stock-change ${navChange >= 0 ? 'positive' : 'negative'}`;
-        }
-        
-        // Initialize chart
-        function initializeChart(period = '1d') {
-            const dataPoints = period === '1d' ? 78 : 
-                             period === '1w' ? 7 :
-                             period === '1m' ? 30 :
-                             period === '3m' ? 13 : 12;
-            
-            // Generate realistic data
-            const priceData = generatePriceData(period);
-            const timeLabels = generateTimeLabels(dataPoints, period);
-            
-            // Calculate metrics
-            const high = Math.max(...priceData);
-            const low = Math.min(...priceData);
-            const currentPrice = priceData[priceData.length - 1];
-            const previousClose = period === '1d' ? PREV_CLOSE : priceData[0];
-            
-            // Hide loading, show chart
-            chartLoadingEl.style.display = 'none';
-            mainChartCanvas.style.display = 'block';
-            
-            const ctx = mainChartCanvas.getContext('2d');
-            
-            // Destroy existing chart if it exists
-            if (mainChart) {
-                mainChart.destroy();
-            }
-            
-            // Create new chart
-            mainChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: timeLabels,
-                    datasets: [{
-                        label: 'GOLDBEES',
-                        data: priceData,
-                        borderColor: '#ffd700',
-                        backgroundColor: 'rgba(255, 215, 0, 0.1)',
-                        borderWidth: 2,
-                        fill: true,
-                        tension: 0.1,
-                        pointRadius: 0,
-                        pointHoverRadius: 4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            mode: 'index',
-                            intersect: false,
-                            callbacks: {
-                                label: function(context) {
-                                    return `Price: ${formatINR(context.parsed.y)}`;
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            grid: {
-                                display: false,
-                                color: 'rgba(255, 255, 255, 0.1)'
-                            },
-                            ticks: {
-                                color: 'rgba(255, 255, 255, 0.7)',
-                                maxTicksLimit: 8
-                            }
-                        },
-                        y: {
-                            position: 'right',
-                            grid: {
-                                color: 'rgba(255, 255, 255, 0.1)'
-                            },
-                            ticks: {
-                                color: 'rgba(255, 255, 255, 0.7)',
-                                callback: function(value) {
-                                    return formatINR(value);
-                                }
-                            }
-                        }
-                    },
-                    interaction: {
-                        intersect: false,
-                        mode: 'index'
-                    }
-                }
-            });
-            
-            // Update price display and metrics
-            updatePriceDisplay(currentPrice, previousClose);
-            
-            // Update performance metrics
-            todayHighEl.textContent = formatINR(high);
-            todayLowEl.textContent = formatINR(low);
-            
-            // Set realistic 52-week highs/lows
-            yearHighEl.textContent = formatINR(5845.50);
-            yearLowEl.textContent = formatINR(4890.75);
-            
-            volumeEl.textContent = '2.85L';
-            lastUpdatedEl.textContent = period === '1d' ? '15:30 IST' : new Date().toLocaleDateString();
-            
-            // Store current data
-            currentData = {
-                prices: priceData,
-                currentPrice: currentPrice,
-                high: high,
-                low: low
-            };
-        }
-        
-        // Start live updates (only when market is open)
-        function startLiveUpdates() {
-            if (updateInterval) {
-                clearInterval(updateInterval);
-            }
-            
-            updateInterval = setInterval(() => {
-                if (!isMarketOpen || !mainChart || !currentData) return;
-                
-                const data = mainChart.data.datasets[0].data;
-                const lastPrice = data[data.length - 1];
-                
-                // Generate new price with realistic movement
-                const changePercent = (Math.random() - 0.48) * 0.05; // Small changes
-                const newPrice = lastPrice * (1 + changePercent / 100);
-                
-                // Add new data point and remove the first one
-                data.push(newPrice);
-                data.shift();
-                
-                // Update labels (shift time forward)
-                const labels = mainChart.data.labels;
-                labels.shift();
-                
-                // Calculate next time (5 minutes later)
-                if (labels.length > 0) {
-                    const lastTimeStr = labels[labels.length - 1];
-                    const [hours, minutes] = lastTimeStr.split(':').map(Number);
-                    let newHours = hours;
-                    let newMinutes = minutes + 5;
-                    
-                    if (newMinutes >= 60) {
-                        newMinutes = 0;
-                        newHours += 1;
-                    }
-                    
-                    // Market closes at 3:30 PM
-                    if (newHours >= 15 && newMinutes > 30) {
-                        // Stop updates if market would be closed
-                        updateMarketStatusDisplay();
-                        return;
-                    }
-                    
-                    const newTime = `${newHours.toString().padStart(2, '0')}:${newMinutes.toString().padStart(2, '0')}`;
-                    labels.push(newTime);
-                }
-                
-                // Update the chart
-                mainChart.update('none');
-                
-                // Update current data
-                currentData.prices = data;
-                currentData.currentPrice = newPrice;
-                currentData.high = Math.max(...data);
-                currentData.low = Math.min(...data);
-                
-                // Update price display
-                const previousClose = data.length > 1 ? data[data.length - 2] : PREV_CLOSE;
-                updatePriceDisplay(newPrice, previousClose);
-                
-                // Update performance metrics
-                todayHighEl.textContent = formatINR(currentData.high);
-                todayLowEl.textContent = formatINR(currentData.low);
-                lastUpdatedEl.textContent = new Date().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'}) + ' IST';
-                
-            }, 5000); // Update every 5 seconds
-        }
-        
-        // Set active time period
-        function setActivePeriod(period) {
-            Object.values(timeButtons).forEach(button => {
-                button.classList.remove('active');
-            });
-            
-            timeButtons[period].classList.add('active');
-            initializeChart(period);
-        }
-        
-        // Event listeners for time period buttons
-        Object.keys(timeButtons).forEach(period => {
-            timeButtons[period].addEventListener('click', () => {
-                setActivePeriod(period);
-            });
-        });
-        
-        // Initialize the application
-        document.addEventListener('DOMContentLoaded', function() {
-            // Check market status
-            updateMarketStatusDisplay();
-            
-            // Initialize with 1D view
-            initializeChart('1d');
-            
-            // Check market status every minute
-            setInterval(updateMarketStatusDisplay, 60000);
-            
-            // Hide loading after a short delay
-            setTimeout(() => {
-                chartLoadingEl.style.display = 'none';
-                mainChartCanvas.style.display = 'block';
-            }, 1000);
-        });
-    </script>
-</body>
+    <!-- JavaScript Libraries -->
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.bundle.min.js"></script>
+    <script src="lib/easing/easing.min.js"></script>
+    <script src="lib/slick/slick.min.js"></script>
+    <script src="lib/typed/typed.min.js"></script>
+    <script src="lib/waypoints/waypoints.min.js"></script>
+    <script src="lib/isotope/isotope.pkgd.min.js"></script>
+    <script src="lib/lightbox/js/lightbox.min.js"></script>
+
+    <!-- Template Javascript -->
+    <script src="js/main.js"></script>
+  </body>
 </html>
